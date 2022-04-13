@@ -11,54 +11,69 @@ type Point struct {
 }
 
 type Vector struct {
-	// TODO add periodicity to dir so accepted values are 0 <= dir < 2*pi
-	len float64 // Length (magnitude) in units
-	dir float64 // Angle in radians, defined clockwise from the +x axis
+	x float64 // Length (magnitude) in units
+	y float64 // Angle in radians, defined clockwise from the +x axis
 }
 
-func (p *Point) ConvertToVector() Vector {
-	var dir, len float64
-	len = math.Sqrt(math.Pow(p.x, 2) + math.Pow(p.y, 2))
+// Create a vector to a target point assuming origin at 0, 0.
+func (p *Point) ToVector() Vector {
+	return Vector{
+		x: p.x,
+		y: p.y,
+	}
+}
+
+// Create a vector connecting an origin point to a target point.
+func (p1 *Point) ToConnectingVector(p2 *Point) Vector {
+	return Vector{
+		x: p2.x - p1.x,
+		y: p2.y - p1.y,
+	}
+}
+
+// Return the magnitude (length) of v.
+func (v *Vector) Len() float64 {
+	return math.Sqrt(math.Pow(v.x, 2) + math.Pow(v.y, 2))
+}
+
+// Return the direction of v in radians, defined clockwise from the +x-axis.
+func (v *Vector) Dir() float64 {
+	var dir float64
+	len := v.Len()
 
 	// Calculate dir in the principal value ranges of arccosine or arcsine
 	if len == 0 {
 		dir = 0
 	} else {
-		dir = math.Acos(p.x / len) // Principal value range:     0 <= dir <= pi
+		dir = math.Acos(v.x / len) // Principal value range: 0 <= dir <= pi
 	}
 
-	// If p is below the x-axis, arccosine returns the counterclockwise angle,
-	// not the clockwise angle, so we have to flip it.
-	if p.y < 0 {
+	// If v points below the x-axis (assuming origin at 0, 0) then arccosine
+	// returns the counterclockwise angle, not the clockwise angle, so we have
+	// to flip it.
+	if v.y < 0 {
 		dir = 2*math.Pi - dir
 	}
 
-	return Vector{
-		len: len,
-		dir: dir,
-	}
-}
-
-// Return the magnitude of the projection of v along the x-axis (i.e. its horizontal component)
-func (v *Vector) X() float64 {
-	x := v.len * math.Cos(v.dir)
-	return x
-}
-
-// Return the magnitude of the projection of v along the y-axis (i.e. its vertical component)
-func (v *Vector) Y() float64 {
-	y := v.len * math.Sin(v.dir)
-	return y
+	return dir
 }
 
 // Return a new point equal to the original point translated by the given vector.
-func (p *Point) AddVector(v *Vector) Point {
-	return Point{x: p.x + v.X(), y: p.y + v.Y()}
+func (p *Point) Translate(v *Vector) Point {
+	return Point{
+		x: p.x + v.x,
+		y: p.y + v.y,
+	}
+}
+
+// Return a new vector that is equal to the sum of two input vectors.
+func (v1 *Vector) Add(v2 *Vector) Vector {
+	return Vector{
+		x: v1.x + v2.x,
+		y: v1.y + v2.y,
+	}
 }
 
 func main() {
-	newPoint := Point{x: 1, y: -1}
-	newVector := newPoint.ConvertToVector()
-	fmt.Println("len:", newVector.len)
-	fmt.Println("dir:", newVector.dir)
+	fmt.Println("hallå värld!")
 }

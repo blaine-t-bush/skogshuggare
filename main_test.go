@@ -46,66 +46,63 @@ func TestPoint(t *testing.T) {
 
 func TestVector(t *testing.T) {
 	type test struct {
-		len    float64
-		dir    float64
+		x      float64
+		y      float64
 		vector Vector
 	}
 
 	tests := []test{
-		{len: 0, dir: 0, vector: Vector{len: 0, dir: 0}},
-		{len: 1, dir: 7, vector: Vector{len: 1, dir: 7}},
-		{len: 99999.9999, dir: math.Pi, vector: Vector{len: 99999.9999, dir: math.Pi}},
-		{len: -5.2, dir: -9e-5, vector: Vector{len: -5.2, dir: -9e-5}},
-		{len: -9e-5, dir: 2, vector: Vector{len: -9e-5, dir: 2}},
-		{len: 7.5e7, dir: 3, vector: Vector{len: 7.5e7, dir: 3}},
-		{len: 2, dir: 5, vector: Vector{len: 2, dir: 5}},
-	}
+		{x: 0, y: 0, vector: Vector{x: 0, y: 0}},
+		{x: 1, y: 0, vector: Vector{x: 1, y: 0}},
+		{x: 0, y: 1, vector: Vector{x: 0, y: 1}},
+		{x: 2, y: 2, vector: Vector{x: 2, y: 2}},
+		{x: 2, y: -5.7, vector: Vector{x: 2, y: -5.7}},
+		{x: 2.31, y: -2, vector: Vector{x: 2.31, y: -2}},
+	} // FIXME dynamically generate Points instead of writing values twice.
 
 	for _, testCase := range tests {
 		if reflect.TypeOf(testCase.vector).Name() != "Vector" {
 			t.Errorf("v is not of type Vector, got type %s", reflect.TypeOf(testCase.vector).Name())
 		}
 
-		if !EqualFloats(testCase.vector.len, testCase.len) {
-			t.Errorf("v does not have len value %f, got value %f", testCase.len, testCase.vector.len)
+		if !EqualFloats(testCase.vector.x, testCase.x) {
+			t.Errorf("v does not have x value %f, got value %f", testCase.x, testCase.vector.x)
 		}
 
-		if !EqualFloats(testCase.vector.dir, testCase.dir) {
-			t.Errorf("v does not have dir value %f, got value %f", testCase.dir, testCase.vector.dir)
+		if !EqualFloats(testCase.vector.y, testCase.y) {
+			t.Errorf("v does not have y value %f, got value %f", testCase.y, testCase.vector.y)
 		}
 	}
 }
-func TestConvertToVector(t *testing.T) {
-	type test struct {
-		point Point
-		len   float64
-		dir   float64
-	}
-
-	tests := []test{
-		{point: Point{x: 0, y: 1}, len: 1, dir: math.Pi / 2},
-		{point: Point{x: -2, y: -2}, len: math.Sqrt(8), dir: 5 * math.Pi / 4},
-	}
+func TestToVector(t *testing.T) {
+	tests := []Point{
+		{x: 0, y: 0},
+		{x: 1, y: 0},
+		{x: 0, y: 1},
+		{x: 2, y: 2},
+		{x: 2, y: -5.7},
+		{x: 2.31, y: -2},
+	} // FIXME dynamically generate Points instead of writing values twice.
 
 	for _, testCase := range tests {
-		got := testCase.point.ConvertToVector()
+		got := testCase.ToVector()
 
 		if reflect.TypeOf(got).Name() != "Vector" {
 			t.Errorf("v1 is not of type Vector, got type %s", reflect.TypeOf(got).Name())
 		}
 
-		if !EqualFloats(got.len, testCase.len) {
-			t.Errorf("v1 does not have len value %f, got value %f", testCase.len, got.len)
+		if !EqualFloats(got.x, testCase.x) {
+			t.Errorf("v1 does not have x value %f, got value %f", testCase.x, got.x)
 		}
 
-		if !EqualFloats(got.dir, testCase.dir) {
-			t.Errorf("v1 does not have dir value %f, got value %f", testCase.dir, got.dir)
+		if !EqualFloats(got.y, testCase.y) {
+			t.Errorf("v1 does not have y value %f, got value %f", testCase.y, got.y)
 		}
 
 	}
 }
 
-func TestAddVector(t *testing.T) {
+func TestTranslate(t *testing.T) {
 	type test struct {
 		point  Point
 		vector Vector
@@ -113,15 +110,46 @@ func TestAddVector(t *testing.T) {
 	}
 
 	tests := []test{
-		{point: Point{x: 0, y: 0}, vector: Vector{len: 0, dir: 0}, want: Point{x: 0, y: 0}},
-		{point: Point{x: 0, y: 0}, vector: Vector{len: 1, dir: 0}, want: Point{x: 1, y: 0}},
-		{point: Point{x: 0, y: 0}, vector: Vector{len: 1, dir: math.Pi / 2}, want: Point{x: 0, y: 1}},
+		{point: Point{x: 0, y: 0}, vector: Vector{x: 0, y: 0}, want: Point{x: 0, y: 0}},
+		{point: Point{x: 0, y: 0}, vector: Vector{x: 1, y: 0}, want: Point{x: 1, y: 0}},
+		{point: Point{x: 0, y: 0}, vector: Vector{x: 1, y: 7.2}, want: Point{x: 1, y: 7.2}},
 	}
 
 	for _, testCase := range tests {
-		got := testCase.point.AddVector(&testCase.vector)
-		if !EqualFloats(testCase.want.x, got.x) || !EqualFloats(testCase.want.y, got.y) {
-			t.Errorf("point does not have value %v, got value %v instead", testCase.want, got)
+		got := testCase.point.Translate(&testCase.vector)
+
+		if !EqualFloats(testCase.want.x, got.x) {
+			t.Errorf("point does not have x value %v, got value %v instead", testCase.want.x, got.x)
+		}
+
+		if !EqualFloats(testCase.want.y, got.y) || !EqualFloats(testCase.want.y, got.y) {
+			t.Errorf("point does not have y value %v, got value %v instead", testCase.want.y, got.y)
+		}
+	}
+}
+
+func TestAdd(t *testing.T) {
+	type test struct {
+		vector1 Vector
+		vector2 Vector
+		want    Vector
+	}
+
+	tests := []test{
+		{vector1: Vector{x: 0, y: 0}, vector2: Vector{x: 0, y: 0}, want: Vector{x: 0, y: 0}},
+		{vector1: Vector{x: 0, y: 0}, vector2: Vector{x: 1, y: 0}, want: Vector{x: 1, y: 0}},
+		{vector1: Vector{x: 0, y: 0}, vector2: Vector{x: 1, y: 7.2}, want: Vector{x: 1, y: 7.2}},
+	}
+
+	for _, testCase := range tests {
+		got := testCase.vector1.Add(&testCase.vector2)
+
+		if !EqualFloats(testCase.want.x, got.x) {
+			t.Errorf("vector does not have x value %f, got value %f instead", testCase.want.x, got.x)
+		}
+
+		if !EqualFloats(testCase.want.y, got.y) {
+			t.Errorf("vector does not have y value %f, got value %f instead", testCase.want.y, got.y)
 		}
 	}
 }
