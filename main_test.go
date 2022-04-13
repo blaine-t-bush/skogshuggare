@@ -122,8 +122,52 @@ func TestTranslate(t *testing.T) {
 			t.Errorf("point does not have x value %v, got value %v instead", testCase.want.x, got.x)
 		}
 
-		if !EqualFloats(testCase.want.y, got.y) || !EqualFloats(testCase.want.y, got.y) {
+		if !EqualFloats(testCase.want.y, got.y) {
 			t.Errorf("point does not have y value %v, got value %v instead", testCase.want.y, got.y)
+		}
+	}
+}
+
+func TestLen(t *testing.T) {
+	type test struct {
+		vector Vector
+		len    float64
+	}
+
+	tests := []test{
+		{vector: Vector{x: 0, y: 0}, len: 0},
+		{vector: Vector{x: 1, y: 0}, len: 1},
+		{vector: Vector{x: 0, y: 2.5}, len: 2.5},
+		{vector: Vector{x: -7.9, y: -7.9}, len: math.Sqrt(124.82)},
+	}
+
+	for _, testCase := range tests {
+		got := testCase.vector.Len()
+
+		if !EqualFloats(got, testCase.len) {
+			t.Errorf("vector does not have length %f, got %f instead", testCase.len, got)
+		}
+	}
+}
+
+func TestDir(t *testing.T) {
+	type test struct {
+		vector Vector
+		dir    float64
+	}
+
+	tests := []test{
+		{vector: Vector{x: 0, y: 0}, dir: 0},
+		{vector: Vector{x: 1, y: 0}, dir: 0},
+		{vector: Vector{x: 0, y: 1}, dir: math.Pi / 2},
+		{vector: Vector{x: -7.9, y: -7.9}, dir: 5 * math.Pi / 4},
+	}
+
+	for _, testCase := range tests {
+		got := testCase.vector.Dir()
+
+		if !EqualFloats(got, testCase.dir) {
+			t.Errorf("vector does not have direction %f, got %f instead", testCase.dir, got)
 		}
 	}
 }

@@ -31,6 +31,14 @@ func (p1 *Point) ToConnectingVector(p2 *Point) Vector {
 	}
 }
 
+// Return a new point equal to the original point translated by the given vector.
+func (p *Point) Translate(v *Vector) Point {
+	return Point{
+		x: p.x + v.x,
+		y: p.y + v.y,
+	}
+}
+
 // Return the magnitude (length) of v.
 func (v *Vector) Len() float64 {
 	return math.Sqrt(math.Pow(v.x, 2) + math.Pow(v.y, 2))
@@ -56,14 +64,6 @@ func (v *Vector) Dir() float64 {
 	}
 
 	return dir
-}
-
-// Return a new point equal to the original point translated by the given vector.
-func (p *Point) Translate(v *Vector) Point {
-	return Point{
-		x: p.x + v.x,
-		y: p.y + v.y,
-	}
 }
 
 // Return a new vector that is equal to the sum of two input vectors.
