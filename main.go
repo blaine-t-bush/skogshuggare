@@ -1,79 +1,50 @@
 package main
 
 import (
-	"fmt"
-	"math"
+	"flag"
+	"image/color"
+	"io"
+	"os"
+
+	"gioui.org/app"
+	"gioui.org/io/system"
+	"gioui.org/unit"
+	"github.com/ajstarks/giocanvas"
 )
 
-type Point struct {
-	x float64 // x-coordinate in units
-	y float64 // y-coordinate in units
-}
-
-type Vector struct {
-	x float64 // Length (magnitude) in units
-	y float64 // Angle in radians, defined clockwise from the +x axis
-}
-
-// Create a vector to a target point assuming origin at 0, 0.
-func (p *Point) ToVector() Vector {
-	return Vector{
-		x: p.x,
-		y: p.y,
-	}
-}
-
-// Create a vector connecting an origin point to a target point.
-func (p1 *Point) ToConnectingVector(p2 *Point) Vector {
-	return Vector{
-		x: p2.x - p1.x,
-		y: p2.y - p1.y,
-	}
-}
-
-// Return a new point equal to the original point translated by the given vector.
-func (p *Point) Translate(v *Vector) Point {
-	return Point{
-		x: p.x + v.x,
-		y: p.y + v.y,
-	}
-}
-
-// Return the magnitude (length) of v.
-func (v *Vector) Len() float64 {
-	return math.Sqrt(math.Pow(v.x, 2) + math.Pow(v.y, 2))
-}
-
-// Return the direction of v in radians, defined clockwise from the +x-axis.
-func (v *Vector) Dir() float64 {
-	var dir float64
-	len := v.Len()
-
-	// Calculate dir in the principal value ranges of arccosine or arcsine
-	if len == 0 {
-		dir = 0
-	} else {
-		dir = math.Acos(v.x / len) // Principal value range: 0 <= dir <= pi
-	}
-
-	// If v points below the x-axis (assuming origin at 0, 0) then arccosine
-	// returns the counterclockwise angle, not the clockwise angle, so we have
-	// to flip it.
-	if v.y < 0 {
-		dir = 2*math.Pi - dir
-	}
-
-	return dir
-}
-
-// Return a new vector that is equal to the sum of two input vectors.
-func (v1 *Vector) Add(v2 *Vector) Vector {
-	return Vector{
-		x: v1.x + v2.x,
-		y: v1.y + v2.y,
-	}
-}
-
 func main() {
-	fmt.Println("hallå värld!")
+	var cw, ch int
+	flag.IntVar(&cw, "width", 1000, "canvas width")
+	flag.IntVar(&ch, "height", 1000, "canvas height")
+	flag.Parse()
+
+	width := float32(cw)
+	height := float32(ch)
+
+	go func() {
+		w := app.NewWindow(app.Title("hello"), app.Size(unit.Px(width), unit.Px(height)))
+		if err := hello(w, width, height); err != nil {
+			io.WriteString(os.Stderr, "Cannot create the window\n")
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
+	app.Main()
+}
+
+func hello(w *app.Window, width, height float32) error {
+	for {
+		e := <-w.Events()
+		switch e := e.(type) {
+		case system.DestroyEvent:
+			return e.Err
+		case system.FrameEvent:
+			canvas := giocanvas.NewCanvas(width, height, system.FrameEvent{})
+			canvas.CenterRect(50, 50, 100, 100, color.NRGBA{0, 0, 0, 255})
+			canvas.Circle(50, 0, 50, color.NRGBA{0, 0, 255, 255})
+			canvas.TextMid(50, 20, 10, "hello, world", color.NRGBA{255, 255, 255, 255})
+			canvas.CenterImage("earth.jpg", 50, 70, 1000, 1000, 30)
+			e.Frame(canvas.Context.Ops)
+		}
+	}
 }
