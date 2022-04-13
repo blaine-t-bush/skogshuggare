@@ -16,7 +16,7 @@ type Vector struct {
 	dir float64 // Angle in radians, defined clockwise from the +x axis
 }
 
-func (p *Point) PointToVector() Vector {
+func (p *Point) ConvertToVector() Vector {
 	var dir, len float64
 	len = math.Sqrt(math.Pow(p.x, 2) + math.Pow(p.y, 2))
 
@@ -39,9 +39,26 @@ func (p *Point) PointToVector() Vector {
 	}
 }
 
+// Return the magnitude of the projection of v along the x-axis (i.e. its horizontal component)
+func (v *Vector) X() float64 {
+	x := v.len * math.Cos(v.dir)
+	return x
+}
+
+// Return the magnitude of the projection of v along the y-axis (i.e. its vertical component)
+func (v *Vector) Y() float64 {
+	y := v.len * math.Sin(v.dir)
+	return y
+}
+
+// Return a new point equal to the original point translated by the given vector.
+func (p *Point) AddVector(v *Vector) Point {
+	return Point{x: p.x + v.X(), y: p.y + v.Y()}
+}
+
 func main() {
 	newPoint := Point{x: 1, y: -1}
-	newVector := newPoint.PointToVector()
+	newVector := newPoint.ConvertToVector()
 	fmt.Println("len:", newVector.len)
 	fmt.Println("dir:", newVector.dir)
 }
