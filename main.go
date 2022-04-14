@@ -2,14 +2,18 @@ package main
 
 import (
 	"flag"
-	"image/color"
+	"fmt"
 	"io"
 	"os"
+	"time"
+
+	"image/color"
 
 	"gioui.org/app"
 	"gioui.org/io/system"
 	"gioui.org/unit"
 	"github.com/ajstarks/giocanvas"
+	"github.com/eiannone/keyboard"
 )
 
 func main() {
@@ -21,9 +25,29 @@ func main() {
 	width := float32(cw)
 	height := float32(ch)
 
+	ticker := time.NewTicker(500 * time.Millisecond)
+	done := make(chan bool)
+
+	fmt.Println("hello")
+
 	go func() {
-		w := app.NewWindow(app.Title("hello"), app.Size(unit.Px(width), unit.Px(height)))
-		if err := hello(w, width, height); err != nil {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				char, _, err := keyboard.GetSingleKey()
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("You pressed: %q\r\n", char)
+			}
+		}
+	}()
+
+	go func() {
+		w := app.NewWindow(app.Title("Skogshuggare"), app.Size(unit.Px(width), unit.Px(height)))
+		if err := CreateCanvas(w, width, height); err != nil {
 			io.WriteString(os.Stderr, "Cannot create the window\n")
 			os.Exit(1)
 		}
@@ -32,7 +56,7 @@ func main() {
 	app.Main()
 }
 
-func hello(w *app.Window, width, height float32) error {
+func CreateCanvas(w *app.Window, width, height float32) error {
 	for {
 		e := <-w.Events()
 		switch e := e.(type) {
@@ -40,11 +64,12 @@ func hello(w *app.Window, width, height float32) error {
 			return e.Err
 		case system.FrameEvent:
 			canvas := giocanvas.NewCanvas(width, height, system.FrameEvent{})
-			canvas.CenterRect(50, 50, 100, 100, color.NRGBA{0, 0, 0, 255})
-			canvas.Circle(50, 0, 50, color.NRGBA{0, 0, 255, 255})
-			canvas.TextMid(50, 20, 10, "hello, world", color.NRGBA{255, 255, 255, 255})
-			canvas.CenterImage("earth.jpg", 50, 70, 1000, 1000, 30)
+			CreateBlock(canvas)
 			e.Frame(canvas.Context.Ops)
 		}
 	}
+}
+
+func CreateBlock(canvas *giocanvas.Canvas) {
+	canvas.CenterRect(50, 50, 10, 10, color.NRGBA{100, 0, 0, 255})
 }

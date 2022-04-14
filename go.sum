@@ -1,5 +1,4 @@
-gioui.org v0.0.0-20220408110527-49bd5787e4c9 h1:Q/ufrwPIYo30QEVKd4UjcP1IaaIx6JAfD/BLi0Eo7gU=
-gioui.org v0.0.0-20220408110527-49bd5787e4c9/go.mod h1:b8vBukexG6eYuXZa14asjLAWJ+JjbZ/ophEnS2FjYUg=
+eliasnaur.com/font v0.0.0-20220124212145-832bb8fc08c3 h1:djFprmHZgrSepsHAIRMp5UJn3PzsoTg9drI+BDmif5Q=
 gioui.org v0.0.0-20220412162123-38ff78df5dbe h1:rCZdcdRmpZStw7LoHsjQc1G3Bf0/c1zhw7So/XMyQm8=
 gioui.org v0.0.0-20220412162123-38ff78df5dbe/go.mod h1:A0rb8LTFy1Hhi6/2zppz6CRiGJLAk0akcD1p+77l+fg=
 gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
@@ -14,12 +13,12 @@ github.com/benoitkugler/textlayout v0.0.5/go.mod h1:puH4v13Uz7uIhIH0XMk5jgc8U3MX
 github.com/benoitkugler/textlayout v0.0.10 h1:uIaQgH4pBFw1LQ0tPkfjgxo94WYcckzzQaB41L2X84w=
 github.com/benoitkugler/textlayout v0.0.10/go.mod h1:puH4v13Uz7uIhIH0XMk5jgc8U3MXcn5r3VlV9K8n0D8=
 github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21/go.mod h1:po7NpZ/QiTKzBKyrsEAxwnTamCoh8uDk/egRpQ7siIc=
+github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807 h1:jdjd5e68T4R/j4PWxfZqcKY8KtT9oo8IPNVuV4bSXDQ=
+github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807/go.mod h1:Xoiu5VdKMvbRgHuY7+z64lhu/7lvax/22nzASF6GrO8=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/gioui/uax v0.2.1-0.20220325163150-e3d987515a12 h1:1bjaB/5IIicfKpP4k0s30T2WEw//Kh00zULa8DQ0cxA=
 github.com/gioui/uax v0.2.1-0.20220325163150-e3d987515a12/go.mod h1:kDhBRTA/i3H46PVdhqcw26TdGSIj42TOKNWKY+Kipnw=
-github.com/go-text/typesetting v0.0.0-20220112121102-58fe93c84506 h1:1TPz/Gn/MsXwJ6bEtI9wdkPcQYr2X3V9I+wz4wPYUdY=
-github.com/go-text/typesetting v0.0.0-20220112121102-58fe93c84506/go.mod h1:R0mlTNeyszZ/tKQhbZA7SRGjx+OHsmNzgN2jTV7yZcs=
 github.com/go-text/typesetting v0.0.0-20220411150340-35994bc27a7b h1:WINlj3ANt+CVrO2B4NGDHRlPvEWZPxjhb7z+JKypwXI=
 github.com/go-text/typesetting v0.0.0-20220411150340-35994bc27a7b/go.mod h1:ZNYu5saGoMOqtkVH5T8onTwhzenDUVszI+5WFHJRaxQ=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -72,12 +71,11 @@ golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210112080510-489259a85091/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c h1:F1jZWGFhYfh0Ci55sIpILtKKK8p3i2/krTr0H1rg74I=
-golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220412211240-33da011f77ad h1:ntjMns5wyP/fN65tdBD4g8J5w8n015+iIIs9rtjXkY0=
+golang.org/x/sys v0.0.0-20220412211240-33da011f77ad/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
-golang.org/x/text v0.3.6 h1:aRYxNxv6iGQlyVaZmk6ZgYEDa+Jg18DxebPSrd6bg1M=
 golang.org/x/text v0.3.6/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/text v0.3.7 h1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=
 golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
