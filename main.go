@@ -10,68 +10,68 @@ import (
 
 func main() {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
-	s, e := tcell.NewScreen()
-	if e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	if e = s.Init(); e != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", e)
+	if err = screen.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 	}
 
 	// Set default style and clear terminal.
-	s.SetStyle(tcell.StyleDefault)
-	s.Clear()
+	screen.SetStyle(tcell.StyleDefault)
+	screen.Clear()
 
-	// Draw borders.
-	w, h := s.Size()
-	b := Border{1, 0, w - 1, 0, h - 1}
-	b.Draw(s)
-
-	// Draw trees.
-	t1 := Tree{10, 10}
-	t2 := Tree{15, 5}
-	t3 := Tree{16, 8}
-	t4 := Tree{20, 15}
-	t5 := Tree{25, 10}
-	t1.Draw(s)
-	t2.Draw(s)
-	t3.Draw(s)
-	t4.Draw(s)
-	t5.Draw(s)
-
-	// Initialize player.
+	// Initialize game state.
+	w, h := screen.Size()
+	game := Game{
+		player: Player{5, 5},
+		border: Border{0, w - 1, 0, h - 1, 1},
+		trees: []Tree{
+			{10, 10},
+			{15, 5},
+			{16, 8},
+			{20, 15},
+			{25, 10},
+		},
+	}
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Loop(&wg, s)
+	go Loop(&wg, screen, game)
 	wg.Wait()
-
-	s.Fini()
+	screen.Fini()
 }
 
-func Loop(wg *sync.WaitGroup, s tcell.Screen) {
+func Loop(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	defer wg.Done()
-	player := Player{5, 5}
+	// Perform first draw.
+	game.DrawPlayer(screen)
+	game.border.Draw(screen)
+	for _, tree := range game.trees {
+		tree.Draw(screen)
+	}
+
 	for {
-		ev := s.PollEvent()
+		ev := screen.PollEvent()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			switch ev.Key() {
 			case tcell.KeyEscape:
 				return
 			case tcell.KeyUp:
-				player.Move(s, 1, 0)
+				game.MovePlayer(screen, 1, 0)
 			case tcell.KeyRight:
-				player.Move(s, 1, 1)
+				game.MovePlayer(screen, 1, 1)
 			case tcell.KeyDown:
-				player.Move(s, 1, 2)
+				game.MovePlayer(screen, 1, 2)
 			case tcell.KeyLeft:
-				player.Move(s, 1, 3)
+				game.MovePlayer(screen, 1, 3)
 			}
 		case *tcell.EventResize:
-			s.Sync()
+			screen.Sync()
 		}
 	}
 }

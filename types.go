@@ -2,24 +2,17 @@ package main
 
 import "github.com/gdamore/tcell"
 
+type Player struct {
+	x int // Player x-coordinate
+	y int // Player y-coordinate
+}
+
 type Border struct {
-	t  int // Border thickness in characters
 	x1 int // Left border boundary x-coordinate
 	x2 int // Right border boundary x-coordinate
 	y1 int // Top border boundary y-coordinate
 	y2 int // Bottom border boundary y-coordinate
-}
-
-func (b *Border) Draw(s tcell.Screen) {
-	for c := b.x1; c <= b.x2; c++ { // Add top and bottom borders
-		s.SetContent(c, b.y1, '#', nil, tcell.StyleDefault)
-		s.SetContent(c, b.y2, '#', nil, tcell.StyleDefault)
-	}
-
-	for r := b.y1 + 1; r <= b.y2-1; r++ { // Add left and right borders
-		s.SetContent(b.x1, r, '#', nil, tcell.StyleDefault)
-		s.SetContent(b.x2, r, '#', nil, tcell.StyleDefault)
-	}
+	t  int // Border thickness in characters
 }
 
 type Tree struct {
@@ -27,64 +20,92 @@ type Tree struct {
 	y int // Trunk left corner y-coordinate
 }
 
-func (t *Tree) Draw(s tcell.Screen) {
-	s.SetContent(t.x, t.y, '|', nil, tcell.StyleDefault)
-	s.SetContent(t.x+1, t.y, '|', nil, tcell.StyleDefault)
-	s.SetContent(t.x-1, t.y-1, '/', nil, tcell.StyleDefault)
-	s.SetContent(t.x, t.y-1, '_', nil, tcell.StyleDefault)
-	s.SetContent(t.x+1, t.y-1, '_', nil, tcell.StyleDefault)
-	s.SetContent(t.x+2, t.y-1, '\\', nil, tcell.StyleDefault)
-	s.SetContent(t.x, t.y-2, '/', nil, tcell.StyleDefault)
-	s.SetContent(t.x+1, t.y-2, '\\', nil, tcell.StyleDefault)
+type Game struct {
+	player Player
+	border Border
+	trees  []Tree
 }
 
-type Player struct {
-	x int // Player x-coordinate
-	y int // Player y-coordinate
+func (b *Border) Draw(screen tcell.Screen) {
+	for c := b.x1; c <= b.x2; c++ { // Add top and bottom borders
+		screen.SetContent(c, b.y1, '#', nil, tcell.StyleDefault)
+		screen.SetContent(c, b.y2, '#', nil, tcell.StyleDefault)
+	}
+
+	for r := b.y1 + 1; r <= b.y2-1; r++ { // Add left and right borders
+		screen.SetContent(b.x1, r, '#', nil, tcell.StyleDefault)
+		screen.SetContent(b.x2, r, '#', nil, tcell.StyleDefault)
+	}
 }
 
-func (p *Player) Clear(s tcell.Screen) {
-	s.SetContent(p.x, p.y, ' ', nil, tcell.StyleDefault)
-	s.Show()
+func (t *Tree) Draw(screen tcell.Screen) {
+	//  /\
+	// /__\
+	//  ||
+	screen.SetContent(t.x, t.y, '|', nil, tcell.StyleDefault)
+	screen.SetContent(t.x+1, t.y, '|', nil, tcell.StyleDefault)
+	screen.SetContent(t.x-1, t.y-1, '/', nil, tcell.StyleDefault)
+	screen.SetContent(t.x, t.y-1, '_', nil, tcell.StyleDefault)
+	screen.SetContent(t.x+1, t.y-1, '_', nil, tcell.StyleDefault)
+	screen.SetContent(t.x+2, t.y-1, '\\', nil, tcell.StyleDefault)
+	screen.SetContent(t.x, t.y-2, '/', nil, tcell.StyleDefault)
+	screen.SetContent(t.x+1, t.y-2, '\\', nil, tcell.StyleDefault)
 }
 
-func (p *Player) Draw(s tcell.Screen) {
-	s.SetContent(p.x, p.y, '@', nil, tcell.StyleDefault)
-	s.Show()
+func (game *Game) ClearPlayer(screen tcell.Screen) {
+	screen.SetContent(game.player.x, game.player.y, ' ', nil, tcell.StyleDefault)
+	screen.Show()
 }
 
-func (p *Player) Move(s tcell.Screen, len int, dir int) {
-	p.Clear(s)
+func (game *Game) DrawPlayer(screen tcell.Screen) {
+	screen.SetContent(game.player.x, game.player.y, '@', nil, tcell.StyleDefault)
+	screen.Show()
+}
 
-	// Determine new location.
+func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
+	game.ClearPlayer(screen)
+
+	// Determine (potential) new location.
+	pMoved := game.player
 	if len != 0 {
 		switch dir {
 		case 0: // up
-			p.y = p.y - 1
+			pMoved.y = game.player.y - len
 		case 1: // right
-			p.x = p.x + 1
+			pMoved.x = game.player.x + len
 		case 2: // down
-			p.y = p.y + 1
+			pMoved.y = game.player.y + len
 		case 3: // left
-			p.x = p.x - 1
+			pMoved.x = game.player.x - len
 		}
 	}
 
-	// Ensure player doesn't move past boundaries.
-	w, h := s.Size()
-	if p.x >= w-1 {
-		p.x = w - 2
-	} else if p.x <= 0 {
-		p.x = 1
+	// TODO
+	// Prevent update if player would collide with tree trunks, but not with
+	// tree canopies.
+	// Trunks are located at tree.x, tree.y and tree.x+1, tree.y
+	for _, tree := range game.trees {
+		if pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+			pMoved.x = game.player.x
+			pMoved.y = game.player.y
+		}
 	}
 
-	if p.y >= h-1 {
-		p.y = h - 2
-	} else if p.y <= 1 {
-		p.y = 1
+	// Prevent update if new location is past left or right boundaries.
+	if pMoved.x <= game.border.x1 {
+		pMoved.x = game.border.x1 + game.border.t
+	} else if pMoved.x >= game.border.x2 {
+		pMoved.x = game.border.x2 - game.border.t
 	}
 
-	p.Clear(s)
-	p.Draw(s)
+	// Prevent update if new location is past top or bottom boundaries.
+	if pMoved.y <= game.border.y1 {
+		pMoved.y = game.border.y1 + game.border.t
+	} else if pMoved.y >= game.border.y2 {
+		pMoved.y = game.border.y2 - game.border.t
+	}
 
+	game.player = pMoved
+	game.ClearPlayer(screen)
+	game.DrawPlayer(screen)
 }
