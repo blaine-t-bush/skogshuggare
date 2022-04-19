@@ -65,6 +65,13 @@ func Loop(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 				game.MovePlayer(screen, 1, 2)
 			case tcell.KeyLeft:
 				game.MovePlayer(screen, 1, 3)
+			case tcell.KeyRune:
+				switch ev.Rune() {
+				case rune('x'):
+					game.ChopLeft(screen)
+				case rune('c'):
+					game.ChopRight(screen)
+				}
 			}
 		case *tcell.EventResize:
 			screen.Sync()

@@ -1,6 +1,8 @@
 package main
 
-import "github.com/gdamore/tcell"
+import (
+	"github.com/gdamore/tcell"
+)
 
 type Player struct {
 	x int // Player x-coordinate
@@ -27,15 +29,21 @@ type Game struct {
 }
 
 func (game *Game) DrawBorder(screen tcell.Screen) {
-	for c := game.border.x1; c <= game.border.x2; c++ { // Add top and bottom borders
-		screen.SetContent(c, game.border.y1, '#', nil, tcell.StyleDefault)
-		screen.SetContent(c, game.border.y2, '#', nil, tcell.StyleDefault)
+	for c := game.border.x1 + 1; c <= game.border.x2-1; c++ { // Add top and bottom borders
+		screen.SetContent(c, game.border.y1, tcell.RuneHLine, nil, tcell.StyleDefault)
+		screen.SetContent(c, game.border.y2, tcell.RuneHLine, nil, tcell.StyleDefault)
 	}
 
 	for r := game.border.y1 + 1; r <= game.border.y2-1; r++ { // Add left and right borders
-		screen.SetContent(game.border.x1, r, '#', nil, tcell.StyleDefault)
-		screen.SetContent(game.border.x2, r, '#', nil, tcell.StyleDefault)
+		screen.SetContent(game.border.x1, r, tcell.RuneVLine, nil, tcell.StyleDefault)
+		screen.SetContent(game.border.x2, r, tcell.RuneVLine, nil, tcell.StyleDefault)
 	}
+
+	// Add corners
+	screen.SetContent(game.border.x1, game.border.y1, tcell.RuneULCorner, nil, tcell.StyleDefault)
+	screen.SetContent(game.border.x2, game.border.y1, tcell.RuneURCorner, nil, tcell.StyleDefault)
+	screen.SetContent(game.border.x1, game.border.y2, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+	screen.SetContent(game.border.x2, game.border.y2, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 }
 
 func (game *Game) DrawTrees(screen tcell.Screen) {
@@ -65,6 +73,7 @@ func (game *Game) DrawPlayer(screen tcell.Screen) {
 }
 
 func (game *Game) Draw(screen tcell.Screen) {
+	screen.Clear()
 	game.DrawBorder(screen)
 	game.DrawPlayer(screen)
 	game.DrawTrees(screen)
@@ -116,4 +125,41 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 
 	game.player = pMoved
 	game.Draw(screen)
+}
+
+func (game *Game) ClearTree(screen tcell.Screen, indexToRemove int) {
+	// Clear target tree by replacing it with the last one, then
+	// returning the first n-1 trees.
+	var newTrees []Tree
+	for index, tree := range game.trees {
+		if index != indexToRemove {
+			newTrees = append(newTrees, tree)
+		}
+	}
+	game.trees = newTrees
+	game.Draw(screen)
+}
+
+func (game *Game) ChopLeft(screen tcell.Screen) {
+	// Check if there are any tree trunks to left of player, i.e. if there is a
+	// tree at player.x-2, player.y, since tree trunks have width 2.
+outside:
+	for index, tree := range game.trees {
+		if tree.x == game.player.x-2 && tree.y == game.player.y {
+			game.ClearTree(screen, index)
+			break outside
+		}
+	}
+}
+
+func (game *Game) ChopRight(screen tcell.Screen) {
+	// Check if there are any tree trunks to left of player, i.e. if there is a
+	// tree at player.x-2, player.y, since tree trunks have width 2.
+outside:
+	for index, tree := range game.trees {
+		if tree.x == game.player.x+1 && tree.y == game.player.y {
+			game.ClearTree(screen, index)
+			break outside
+		}
+	}
 }
