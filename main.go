@@ -19,8 +19,28 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%v\n", e)
 	}
 
+	// Set default style and clear terminal.
 	s.SetStyle(tcell.StyleDefault)
 	s.Clear()
+
+	// Draw borders.
+	w, h := s.Size()
+	b := Border{1, 0, w - 1, 0, h - 1}
+	b.Draw(s)
+
+	// Draw trees.
+	t1 := Tree{10, 10}
+	t2 := Tree{15, 5}
+	t3 := Tree{16, 8}
+	t4 := Tree{20, 15}
+	t5 := Tree{25, 10}
+	t1.Draw(s)
+	t2.Draw(s)
+	t3.Draw(s)
+	t4.Draw(s)
+	t5.Draw(s)
+
+	// Initialize player.
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
@@ -33,7 +53,7 @@ func main() {
 
 func Loop(wg *sync.WaitGroup, s tcell.Screen) {
 	defer wg.Done()
-	loc := Point{5, 5}
+	player := Player{5, 5}
 	for {
 		ev := s.PollEvent()
 		switch ev := ev.(type) {
@@ -41,43 +61,17 @@ func Loop(wg *sync.WaitGroup, s tcell.Screen) {
 			switch ev.Key() {
 			case tcell.KeyEscape:
 				return
-			case tcell.KeyEnter:
-				loc = DrawPlayer(s, loc, false, 0)
 			case tcell.KeyUp:
-				loc = DrawPlayer(s, loc, true, 0)
+				player.Move(s, 1, 0)
 			case tcell.KeyRight:
-				loc = DrawPlayer(s, loc, true, 1)
+				player.Move(s, 1, 1)
 			case tcell.KeyDown:
-				loc = DrawPlayer(s, loc, true, 2)
+				player.Move(s, 1, 2)
 			case tcell.KeyLeft:
-				loc = DrawPlayer(s, loc, true, 3)
+				player.Move(s, 1, 3)
 			}
 		case *tcell.EventResize:
 			s.Sync()
 		}
 	}
-}
-
-func DrawPlayer(s tcell.Screen, loc Point, isMoving bool, dir int) Point {
-	st := tcell.StyleDefault
-	gl := '@'
-	var newLoc Point
-	s.Clear()
-	if isMoving {
-		switch dir {
-		case 0: // up
-			newLoc = Point{loc.x, loc.y - 1}
-		case 1: // right
-			newLoc = Point{loc.x + 1, loc.y}
-		case 2: // down
-			newLoc = Point{loc.x, loc.y + 1}
-		case 3: // left
-			newLoc = Point{loc.x - 1, loc.y}
-		}
-	} else {
-		newLoc = loc
-	}
-	s.SetCell(newLoc.x, newLoc.y, st, gl)
-	s.Show()
-	return newLoc
 }
