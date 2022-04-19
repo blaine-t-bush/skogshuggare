@@ -18,8 +18,9 @@ type Border struct {
 }
 
 type Tree struct {
-	x int // Trunk left corner x-coordinate
-	y int // Trunk left corner y-coordinate
+	x       int // Trunk left corner x-coordinate
+	y       int // Trunk left corner y-coordinate
+	isStump bool
 }
 
 type Game struct {
@@ -51,14 +52,19 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 	// /__\
 	//  ||
 	for _, tree := range game.trees {
-		screen.SetContent(tree.x, tree.y, '|', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x+1, tree.y, '|', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x, tree.y-1, '_', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x+1, tree.y-1, '_', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x+2, tree.y-1, '\\', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x, tree.y-2, '/', nil, tcell.StyleDefault)
-		screen.SetContent(tree.x+1, tree.y-2, '\\', nil, tcell.StyleDefault)
+		if tree.isStump {
+			screen.SetContent(tree.x, tree.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
+		} else {
+			screen.SetContent(tree.x, tree.y, '|', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, '|', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-1, '_', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y-1, '_', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+2, tree.y-1, '\\', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-2, '/', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y-2, '\\', nil, tcell.StyleDefault)
+		}
 	}
 }
 
@@ -128,12 +134,12 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 }
 
 func (game *Game) ClearTree(screen tcell.Screen, indexToRemove int) {
-	// Clear target tree by replacing it with the last one, then
-	// returning the first n-1 trees.
 	var newTrees []Tree
 	for index, tree := range game.trees {
 		if index != indexToRemove {
 			newTrees = append(newTrees, tree)
+		} else {
+			newTrees = append(newTrees, Tree{tree.x, tree.y, true})
 		}
 	}
 	game.trees = newTrees
@@ -145,7 +151,7 @@ func (game *Game) ChopLeft(screen tcell.Screen) {
 	// tree at player.x-2, player.y, since tree trunks have width 2.
 outside:
 	for index, tree := range game.trees {
-		if tree.x == game.player.x-2 && tree.y == game.player.y {
+		if !tree.isStump && tree.x == game.player.x-2 && tree.y == game.player.y {
 			game.ClearTree(screen, index)
 			break outside
 		}
@@ -157,7 +163,7 @@ func (game *Game) ChopRight(screen tcell.Screen) {
 	// tree at player.x-2, player.y, since tree trunks have width 2.
 outside:
 	for index, tree := range game.trees {
-		if tree.x == game.player.x+1 && tree.y == game.player.y {
+		if !tree.isStump && tree.x == game.player.x+1 && tree.y == game.player.y {
 			game.ClearTree(screen, index)
 			break outside
 		}
