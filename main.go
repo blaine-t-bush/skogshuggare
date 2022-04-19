@@ -48,11 +48,7 @@ func main() {
 func Loop(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	defer wg.Done()
 	// Perform first draw.
-	game.DrawPlayer(screen)
-	game.border.Draw(screen)
-	for _, tree := range game.trees {
-		tree.Draw(screen)
-	}
+	game.Draw(screen)
 
 	for {
 		ev := screen.PollEvent()

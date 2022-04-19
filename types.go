@@ -26,39 +26,48 @@ type Game struct {
 	trees  []Tree
 }
 
-func (b *Border) Draw(screen tcell.Screen) {
-	for c := b.x1; c <= b.x2; c++ { // Add top and bottom borders
-		screen.SetContent(c, b.y1, '#', nil, tcell.StyleDefault)
-		screen.SetContent(c, b.y2, '#', nil, tcell.StyleDefault)
+func (game *Game) DrawBorder(screen tcell.Screen) {
+	for c := game.border.x1; c <= game.border.x2; c++ { // Add top and bottom borders
+		screen.SetContent(c, game.border.y1, '#', nil, tcell.StyleDefault)
+		screen.SetContent(c, game.border.y2, '#', nil, tcell.StyleDefault)
 	}
 
-	for r := b.y1 + 1; r <= b.y2-1; r++ { // Add left and right borders
-		screen.SetContent(b.x1, r, '#', nil, tcell.StyleDefault)
-		screen.SetContent(b.x2, r, '#', nil, tcell.StyleDefault)
+	for r := game.border.y1 + 1; r <= game.border.y2-1; r++ { // Add left and right borders
+		screen.SetContent(game.border.x1, r, '#', nil, tcell.StyleDefault)
+		screen.SetContent(game.border.x2, r, '#', nil, tcell.StyleDefault)
 	}
 }
 
-func (t *Tree) Draw(screen tcell.Screen) {
+func (game *Game) DrawTrees(screen tcell.Screen) {
 	//  /\
 	// /__\
 	//  ||
-	screen.SetContent(t.x, t.y, '|', nil, tcell.StyleDefault)
-	screen.SetContent(t.x+1, t.y, '|', nil, tcell.StyleDefault)
-	screen.SetContent(t.x-1, t.y-1, '/', nil, tcell.StyleDefault)
-	screen.SetContent(t.x, t.y-1, '_', nil, tcell.StyleDefault)
-	screen.SetContent(t.x+1, t.y-1, '_', nil, tcell.StyleDefault)
-	screen.SetContent(t.x+2, t.y-1, '\\', nil, tcell.StyleDefault)
-	screen.SetContent(t.x, t.y-2, '/', nil, tcell.StyleDefault)
-	screen.SetContent(t.x+1, t.y-2, '\\', nil, tcell.StyleDefault)
+	for _, tree := range game.trees {
+		screen.SetContent(tree.x, tree.y, '|', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x+1, tree.y, '|', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x, tree.y-1, '_', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x+1, tree.y-1, '_', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x+2, tree.y-1, '\\', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x, tree.y-2, '/', nil, tcell.StyleDefault)
+		screen.SetContent(tree.x+1, tree.y-2, '\\', nil, tcell.StyleDefault)
+	}
 }
 
 func (game *Game) ClearPlayer(screen tcell.Screen) {
 	screen.SetContent(game.player.x, game.player.y, ' ', nil, tcell.StyleDefault)
-	screen.Show()
+	// screen.Show()
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
 	screen.SetContent(game.player.x, game.player.y, '@', nil, tcell.StyleDefault)
+	// screen.Show()
+}
+
+func (game *Game) Draw(screen tcell.Screen) {
+	game.DrawBorder(screen)
+	game.DrawPlayer(screen)
+	game.DrawTrees(screen)
 	screen.Show()
 }
 
@@ -106,6 +115,5 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	}
 
 	game.player = pMoved
-	game.ClearPlayer(screen)
-	game.DrawPlayer(screen)
+	game.Draw(screen)
 }
