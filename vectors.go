@@ -5,13 +5,13 @@ import (
 )
 
 type Point struct {
-	x float64 // x-coordinate in units
-	y float64 // y-coordinate in units
+	x float64 // x-coordinate in arbitrary units
+	y float64 // y-coordinate in arbitrary units
 }
 
 type Vector struct {
-	x float64 // Length (magnitude) in units
-	y float64 // Angle in radians, defined clockwise from the +x axis
+	x float64 // x component in arbitrary units
+	y float64 // y component in arbitrary units
 }
 
 // Create a vector to a target point assuming origin at 0, 0.
