@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell"
 )
 
@@ -22,6 +24,23 @@ type Tree struct {
 	y     int // Trunk left corner y-coordinate
 	state int // -1: removed; 0: stump; 1: tall stump; 2: fully grown
 }
+
+const (
+	// Directions
+	DirUp    = 0
+	DirRight = 1
+	DirDown  = 2
+	DirLeft  = 3
+	DirOmni  = 4
+	// Living tree states
+	TreeStateSeed    = 0
+	TreeStateSapling = 1
+	TreeStateAdult   = 2
+	// Harvested tree states
+	TreeStateRemoved = 10
+	TreeStateStump   = 11
+	TreeStateTrunk   = 12
+)
 
 type Game struct {
 	player Player
@@ -56,18 +75,15 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 	//  ||
 	for _, tree := range game.trees {
 		switch tree.state {
-		case -1: // removed
-			screen.SetContent(tree.x, tree.y, ' ', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, ' ', nil, tcell.StyleDefault)
-		case 0: // stump
+		case TreeStateStump:
 			screen.SetContent(tree.x, tree.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
-		case 1: // trunk
+		case TreeStateTrunk:
 			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
-		case 2: // grown
+		case TreeStateAdult:
 			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
@@ -103,13 +119,13 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	pMoved := game.player
 	if len != 0 {
 		switch dir {
-		case 0: // up
+		case DirUp:
 			pMoved.y = game.player.y - len
-		case 1: // right
+		case DirRight:
 			pMoved.x = game.player.x + len
-		case 2: // down
+		case DirDown:
 			pMoved.y = game.player.y + len
-		case 3: // left
+		case DirLeft:
 			pMoved.x = game.player.x - len
 		}
 	}
@@ -119,7 +135,7 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	// tree canopies.
 	// Trunks are located at tree.x, tree.y and tree.x+1, tree.y
 	for _, tree := range game.trees {
-		if tree.state != -1 && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+		if pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
 			pMoved.x = game.player.x
 			pMoved.y = game.player.y
 		}
@@ -148,10 +164,15 @@ func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
 	for index, tree := range game.trees {
 		if index != indexToRemove {
 			newTrees[index] = tree
-		} else if tree.state == 2 {
-			newTrees[index] = &Tree{tree.x, tree.y, 1}
-		} else if tree.state == 1 {
-			newTrees[index] = &Tree{tree.x, tree.y, 0}
+		} else if tree.state == TreeStateAdult { // Adults get chopped to trunks
+			newTrees[index] = &Tree{tree.x, tree.y, TreeStateTrunk}
+		} else if tree.state == TreeStateTrunk { // Trunks get chopped to stumps
+			newTrees[index] = &Tree{tree.x, tree.y, TreeStateStump}
+		} else if tree.state == TreeStateStump { // Stumps get removed
+			// newTrees[index] = &Tree{tree.x, tree.y, TreeStateRemoved}
+		} else { // State unaccounted for
+			panicMsg := fmt.Sprintf("Unaccounted tree state in DecrementTree(): %v", tree.state)
+			panic(panicMsg)
 		}
 	}
 	game.trees = newTrees
@@ -166,26 +187,26 @@ outside:
 			isBelow := tree.y == game.player.y+1 && (tree.x == game.player.x || tree.x+1 == game.player.x)
 			isLeft := tree.y == game.player.y && tree.x == game.player.x-2
 			switch dir {
-			case -1: // omnidirectional
+			case DirOmni:
 				if isAbove || isRight || isBelow || isLeft {
 					game.DecrementTree(screen, index)
 				}
-			case 0: // up
+			case DirUp:
 				if isAbove {
 					game.DecrementTree(screen, index)
 					break outside
 				}
-			case 1: // right
+			case DirRight:
 				if isRight {
 					game.DecrementTree(screen, index)
 					break outside
 				}
-			case 2: // down
+			case DirDown:
 				if isBelow {
 					game.DecrementTree(screen, index)
 					break outside
 				}
-			case 3: // left
+			case DirLeft:
 				if isLeft {
 					game.DecrementTree(screen, index)
 					break outside

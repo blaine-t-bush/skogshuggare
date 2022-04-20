@@ -78,25 +78,25 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.exit = true
 			return
 		case tcell.KeyUp:
-			game.MovePlayer(screen, 1, 0)
+			game.MovePlayer(screen, 1, DirUp)
 		case tcell.KeyRight:
-			game.MovePlayer(screen, 1, 1)
+			game.MovePlayer(screen, 1, DirRight)
 		case tcell.KeyDown:
-			game.MovePlayer(screen, 1, 2)
+			game.MovePlayer(screen, 1, DirDown)
 		case tcell.KeyLeft:
-			game.MovePlayer(screen, 1, 3)
+			game.MovePlayer(screen, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune(' '):
-				game.Chop(screen, -1)
+				game.Chop(screen, DirOmni)
 			case rune('w'):
-				game.Chop(screen, 0)
+				game.Chop(screen, DirUp)
 			case rune('d'):
-				game.Chop(screen, 1)
+				game.Chop(screen, DirRight)
 			case rune('s'):
-				game.Chop(screen, 2)
+				game.Chop(screen, DirDown)
 			case rune('a'):
-				game.Chop(screen, 3)
+				game.Chop(screen, DirLeft)
 			}
 		}
 	case *tcell.EventResize:
