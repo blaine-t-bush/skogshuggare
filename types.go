@@ -20,15 +20,18 @@ type Border struct {
 type Tree struct {
 	x     int // Trunk left corner x-coordinate
 	y     int // Trunk left corner y-coordinate
-	state int // 0: stump; 1: tall stump; 2: fully grown
+	state int // -1: removed; 0: stump; 1: tall stump; 2: fully grown
 }
 
 type Game struct {
 	player Player
 	border Border
-	trees  []Tree
+	trees  map[int]*Tree
+	exit   bool
 }
 
+// NOTE
+// Interesting Unicode characters (e.g. arrows) start at 2190.
 func (game *Game) DrawBorder(screen tcell.Screen) {
 	for c := game.border.x1 + 1; c <= game.border.x2-1; c++ { // Add top and bottom borders
 		screen.SetContent(c, game.border.y1, tcell.RuneHLine, nil, tcell.StyleDefault)
@@ -52,15 +55,19 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 	// /__\
 	//  ||
 	for _, tree := range game.trees {
-		if tree.state == 0 {
+		switch tree.state {
+		case -1: // removed
+			screen.SetContent(tree.x, tree.y, ' ', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, ' ', nil, tcell.StyleDefault)
+		case 0: // stump
 			screen.SetContent(tree.x, tree.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
-		} else if tree.state == 1 {
+		case 1: // trunk
 			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
-		} else {
+		case 2: // grown
 			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
@@ -136,41 +143,56 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
-func (game *Game) ClearTree(screen tcell.Screen, indexToRemove int) {
-	var newTrees []Tree
+func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
+	newTrees := make(map[int]*Tree)
 	for index, tree := range game.trees {
 		if index != indexToRemove {
-			newTrees = append(newTrees, tree)
+			newTrees[index] = tree
 		} else if tree.state == 2 {
-			newTrees = append(newTrees, Tree{tree.x, tree.y, 1})
+			newTrees[index] = &Tree{tree.x, tree.y, 1}
 		} else if tree.state == 1 {
-			newTrees = append(newTrees, Tree{tree.x, tree.y, 0})
+			newTrees[index] = &Tree{tree.x, tree.y, 0}
 		}
 	}
 	game.trees = newTrees
+}
+
+func (game *Game) Chop(screen tcell.Screen, dir int) {
+outside:
+	for index, tree := range game.trees {
+		if tree.state != -1 {
+			isAbove := tree.y == game.player.y-1 && (tree.x == game.player.x || tree.x+1 == game.player.x)
+			isRight := tree.y == game.player.y && tree.x == game.player.x+1
+			isBelow := tree.y == game.player.y+1 && (tree.x == game.player.x || tree.x+1 == game.player.x)
+			isLeft := tree.y == game.player.y && tree.x == game.player.x-2
+			switch dir {
+			case -1: // omnidirectional
+				if isAbove || isRight || isBelow || isLeft {
+					game.DecrementTree(screen, index)
+				}
+			case 0: // up
+				if isAbove {
+					game.DecrementTree(screen, index)
+					break outside
+				}
+			case 1: // right
+				if isRight {
+					game.DecrementTree(screen, index)
+					break outside
+				}
+			case 2: // down
+				if isBelow {
+					game.DecrementTree(screen, index)
+					break outside
+				}
+			case 3: // left
+				if isLeft {
+					game.DecrementTree(screen, index)
+					break outside
+				}
+			}
+		}
+	}
+
 	game.Draw(screen)
-}
-
-func (game *Game) ChopLeft(screen tcell.Screen) {
-	// Check if there are any tree trunks to left of player, i.e. if there is a
-	// tree at player.x-2, player.y, since tree trunks have width 2.
-outside:
-	for index, tree := range game.trees {
-		if tree.state != -1 && tree.x == game.player.x-2 && tree.y == game.player.y {
-			game.ClearTree(screen, index)
-			break outside
-		}
-	}
-}
-
-func (game *Game) ChopRight(screen tcell.Screen) {
-	// Check if there are any tree trunks to left of player, i.e. if there is a
-	// tree at player.x-2, player.y, since tree trunks have width 2.
-outside:
-	for index, tree := range game.trees {
-		if tree.state != -1 && tree.x == game.player.x+1 && tree.y == game.player.y {
-			game.ClearTree(screen, index)
-			break outside
-		}
-	}
 }
