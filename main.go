@@ -29,11 +29,11 @@ func main() {
 		player: Player{5, 5},
 		border: Border{0, w - 1, 0, h - 1, 1},
 		trees: []Tree{
-			{10, 10, false},
-			{15, 5, false},
-			{16, 8, false},
-			{20, 15, false},
-			{25, 10, false},
+			{10, 10, 2},
+			{15, 5, 2},
+			{16, 8, 2},
+			{20, 15, 2},
+			{25, 10, 2},
 		},
 	}
 

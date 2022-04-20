@@ -18,9 +18,9 @@ type Border struct {
 }
 
 type Tree struct {
-	x       int // Trunk left corner x-coordinate
-	y       int // Trunk left corner y-coordinate
-	isStump bool
+	x     int // Trunk left corner x-coordinate
+	y     int // Trunk left corner y-coordinate
+	state int // 0: stump; 1: tall stump; 2: fully grown
 }
 
 type Game struct {
@@ -52,15 +52,20 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 	// /__\
 	//  ||
 	for _, tree := range game.trees {
-		if tree.isStump {
+		if tree.state == 0 {
 			screen.SetContent(tree.x, tree.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
+		} else if tree.state == 1 {
+			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
 		} else {
-			screen.SetContent(tree.x, tree.y, '|', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, '|', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x, tree.y-1, '_', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y-1, '_', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-1, tcell.RuneTTee, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneTTee, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+2, tree.y-1, '\\', nil, tcell.StyleDefault)
 			screen.SetContent(tree.x, tree.y-2, '/', nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y-2, '\\', nil, tcell.StyleDefault)
@@ -70,12 +75,10 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 
 func (game *Game) ClearPlayer(screen tcell.Screen) {
 	screen.SetContent(game.player.x, game.player.y, ' ', nil, tcell.StyleDefault)
-	// screen.Show()
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
 	screen.SetContent(game.player.x, game.player.y, '@', nil, tcell.StyleDefault)
-	// screen.Show()
 }
 
 func (game *Game) Draw(screen tcell.Screen) {
@@ -109,7 +112,7 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	// tree canopies.
 	// Trunks are located at tree.x, tree.y and tree.x+1, tree.y
 	for _, tree := range game.trees {
-		if pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+		if tree.state != -1 && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
 			pMoved.x = game.player.x
 			pMoved.y = game.player.y
 		}
@@ -138,8 +141,10 @@ func (game *Game) ClearTree(screen tcell.Screen, indexToRemove int) {
 	for index, tree := range game.trees {
 		if index != indexToRemove {
 			newTrees = append(newTrees, tree)
-		} else {
-			newTrees = append(newTrees, Tree{tree.x, tree.y, true})
+		} else if tree.state == 2 {
+			newTrees = append(newTrees, Tree{tree.x, tree.y, 1})
+		} else if tree.state == 1 {
+			newTrees = append(newTrees, Tree{tree.x, tree.y, 0})
 		}
 	}
 	game.trees = newTrees
@@ -151,7 +156,7 @@ func (game *Game) ChopLeft(screen tcell.Screen) {
 	// tree at player.x-2, player.y, since tree trunks have width 2.
 outside:
 	for index, tree := range game.trees {
-		if !tree.isStump && tree.x == game.player.x-2 && tree.y == game.player.y {
+		if tree.state != -1 && tree.x == game.player.x-2 && tree.y == game.player.y {
 			game.ClearTree(screen, index)
 			break outside
 		}
@@ -163,7 +168,7 @@ func (game *Game) ChopRight(screen tcell.Screen) {
 	// tree at player.x-2, player.y, since tree trunks have width 2.
 outside:
 	for index, tree := range game.trees {
-		if !tree.isStump && tree.x == game.player.x+1 && tree.y == game.player.y {
+		if tree.state != -1 && tree.x == game.player.x+1 && tree.y == game.player.y {
 			game.ClearTree(screen, index)
 			break outside
 		}
