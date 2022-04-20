@@ -57,7 +57,7 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	game.Draw(screen)
 
 	// Initialize game update ticker.
-	ticker := time.NewTicker(30 * time.Millisecond)
+	ticker := time.NewTicker(TickRate * time.Millisecond)
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
@@ -102,5 +102,6 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
-	game.UpdateTrees()
+	game.AddSeeds()
+	game.GrowTrees()
 }

@@ -27,6 +27,8 @@ type Tree struct {
 }
 
 const (
+	// Game parameters
+	TickRate = 30 // Milliseconds between ticks
 	// Directions
 	DirUp    = 0
 	DirRight = 1
@@ -43,8 +45,10 @@ const (
 	TreeStateTrunk        = 12
 	TreeStateSaplingStump = 13
 	// Growth chances (per game tick)
-	TreeGrowthChanceSeed    = 0.02 // Seed to sapling
-	TreeGrowthChanceSapling = 0.01 // Sapling to adult
+	GrowthChanceSeed    = 0.010 // Seed to sapling
+	GrowthChanceSapling = 0.005 // Sapling to adult
+	SeedCreationChance  = 0.005 // Seed spawning
+	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
 )
 
 type Game struct {
@@ -175,32 +179,42 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
-func (game *Game) UpdateTrees() {
+func (game *Game) AddSeeds() {
+	// Create copy of trees map
 	newTrees := make(map[int]*Tree)
 	for index, tree := range game.trees {
-		if tree.state == TreeStateAdult { // Adults are unaffected
+		newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+	}
+
+	// Get max index of current trees map
+	var maxIndex int
+	for index := range newTrees {
+		if maxIndex < index {
+			maxIndex = index
+		}
+	}
+
+	// Possibly create new seeds
+	for i := 0; i < SeedCreationMax; i++ {
+		if rand.Float64() <= SeedCreationChance {
+			x := rand.Intn(game.border.x2-1) + game.border.x1
+			y := rand.Intn(game.border.y2-1) + game.border.y1
+			newTrees[maxIndex+i] = &Tree{x, y, TreeStateSeed}
+		}
+	}
+
+	game.trees = newTrees
+}
+
+func (game *Game) GrowTrees() {
+	newTrees := make(map[int]*Tree)
+	for index, tree := range game.trees {
+		if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed { // Seeds grow to saplings
+			newTrees[index] = &Tree{tree.x, tree.y, TreeStateSapling}
+		} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling { // Saplings grow to adults
+			newTrees[index] = &Tree{tree.x, tree.y, TreeStateAdult}
+		} else {
 			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-		} else if tree.state == TreeStateTrunk { // Trunks do not grow
-			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-		} else if tree.state == TreeStateStump { // Stumps do not grow
-			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-		} else if tree.state == TreeStateSaplingStump { // Stumps do not grow
-			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-		} else if tree.state == TreeStateSeed { // Seeds grow to saplings
-			if rand.Float64() <= TreeGrowthChanceSeed {
-				newTrees[index] = &Tree{tree.x, tree.y, TreeStateSapling}
-			} else {
-				newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-			}
-		} else if tree.state == TreeStateSapling { // Saplings grow to adults
-			if rand.Float64() <= TreeGrowthChanceSapling {
-				newTrees[index] = &Tree{tree.x, tree.y, TreeStateAdult}
-			} else {
-				newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-			}
-		} else { // State unaccounted for
-			panicMsg := fmt.Sprintf("Unaccounted tree state in DecrementTree(): %v", tree.state)
-			panic(panicMsg)
 		}
 	}
 	game.trees = newTrees
