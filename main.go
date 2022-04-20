@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"sync"
 	"time"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	// Seed randomizer.
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	// Initialize tcell.
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	screen, err := tcell.NewScreen()
 	if err != nil {
@@ -29,18 +34,8 @@ func main() {
 	game := Game{
 		player: Player{5, 5},
 		border: Border{0, w - 1, 0, h - 1, 1},
-		trees: map[int]*Tree{
-			0: {6, 5, TreeStateAdult},
-			1: {3, 4, TreeStateSapling},
-			2: {10, 10, TreeStateAdult},
-			3: {15, 5, TreeStateAdult},
-			4: {16, 8, TreeStateAdult},
-			5: {20, 15, TreeStateAdult},
-			6: {25, 10, TreeStateAdult},
-			7: {27, 12, TreeStateSapling},
-			8: {17, 17, TreeStateSapling},
-		},
-		exit: false,
+		trees:  map[int]*Tree{},
+		exit:   false,
 	}
 
 	// Wait for Loop() goroutine to finish before moving on.
@@ -107,4 +102,5 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
+	game.UpdateTrees()
 }

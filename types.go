@@ -42,6 +42,9 @@ const (
 	TreeStateStump        = 11
 	TreeStateTrunk        = 12
 	TreeStateSaplingStump = 13
+	// Growth chances (per game tick)
+	TreeGrowthChanceSeed    = 0.02 // Seed to sapling
+	TreeGrowthChanceSapling = 0.01 // Sapling to adult
 )
 
 type Game struct {
@@ -146,9 +149,9 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	// TODO
 	// Prevent update if player would collide with tree trunks, but not with
 	// tree canopies.
-	// Trunks are located at tree.x, tree.y and tree.x+1, tree.y
+	// Trunk bases and stumps are located at tree.x, tree.y and tree.x+1, tree.y
 	for _, tree := range game.trees {
-		if tree.state != TreeStateSeed && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+		if tree.state != TreeStateRemoved && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
 			pMoved.x = game.player.x
 			pMoved.y = game.player.y
 		}
@@ -170,6 +173,37 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 
 	game.player = pMoved
 	game.Draw(screen)
+}
+
+func (game *Game) UpdateTrees() {
+	newTrees := make(map[int]*Tree)
+	for index, tree := range game.trees {
+		if tree.state == TreeStateAdult { // Adults are unaffected
+			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		} else if tree.state == TreeStateTrunk { // Trunks do not grow
+			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		} else if tree.state == TreeStateStump { // Stumps do not grow
+			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		} else if tree.state == TreeStateSaplingStump { // Stumps do not grow
+			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		} else if tree.state == TreeStateSeed { // Seeds grow to saplings
+			if rand.Float64() <= TreeGrowthChanceSeed {
+				newTrees[index] = &Tree{tree.x, tree.y, TreeStateSapling}
+			} else {
+				newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+			}
+		} else if tree.state == TreeStateSapling { // Saplings grow to adults
+			if rand.Float64() <= TreeGrowthChanceSapling {
+				newTrees[index] = &Tree{tree.x, tree.y, TreeStateAdult}
+			} else {
+				newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+			}
+		} else { // State unaccounted for
+			panicMsg := fmt.Sprintf("Unaccounted tree state in DecrementTree(): %v", tree.state)
+			panic(panicMsg)
+		}
+	}
+	game.trees = newTrees
 }
 
 func (game *Game) PopulateTrees(screen tcell.Screen) {
@@ -251,6 +285,4 @@ outside:
 			}
 		}
 	}
-
-	game.Draw(screen)
 }
