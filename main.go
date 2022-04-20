@@ -30,13 +30,15 @@ func main() {
 		player: Player{5, 5},
 		border: Border{0, w - 1, 0, h - 1, 1},
 		trees: map[int]*Tree{
-			0: {6, 5, 2},
-			1: {3, 5, 2},
-			2: {10, 10, 2},
-			3: {15, 5, 2},
-			4: {16, 8, 2},
-			5: {20, 15, 2},
-			6: {25, 10, 2},
+			0: {6, 5, TreeStateAdult},
+			1: {3, 4, TreeStateSapling},
+			2: {10, 10, TreeStateAdult},
+			3: {15, 5, TreeStateAdult},
+			4: {16, 8, TreeStateAdult},
+			5: {20, 15, TreeStateAdult},
+			6: {25, 10, TreeStateAdult},
+			7: {27, 12, TreeStateSapling},
+			8: {17, 17, TreeStateSapling},
 		},
 		exit: false,
 	}
@@ -52,6 +54,9 @@ func main() {
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	// Wait for this goroutine to finish before resuming main().
 	defer wg.Done()
+
+	// Randomly seed map with trees in various states.
+	game.PopulateTrees(screen)
 
 	// Perform first draw.
 	game.Draw(screen)

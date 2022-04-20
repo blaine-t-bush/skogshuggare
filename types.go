@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/gdamore/tcell"
 )
@@ -37,9 +38,10 @@ const (
 	TreeStateSapling = 1
 	TreeStateAdult   = 2
 	// Harvested tree states
-	TreeStateRemoved = 10
-	TreeStateStump   = 11
-	TreeStateTrunk   = 12
+	TreeStateRemoved      = 10
+	TreeStateStump        = 11
+	TreeStateTrunk        = 12
+	TreeStateSaplingStump = 13
 )
 
 type Game struct {
@@ -83,6 +85,17 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
+		case TreeStateSaplingStump:
+			screen.SetContent(tree.x, tree.y, '▕', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, '▏', nil, tcell.StyleDefault)
+		case TreeStateSeed:
+			screen.SetContent(tree.x, tree.y, '⎽', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, '⎽', nil, tcell.StyleDefault)
+		case TreeStateSapling:
+			screen.SetContent(tree.x, tree.y, '▕', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y, '▏', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-1, '/', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x+1, tree.y-1, '\\', nil, tcell.StyleDefault)
 		case TreeStateAdult:
 			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
@@ -135,7 +148,7 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	// tree canopies.
 	// Trunks are located at tree.x, tree.y and tree.x+1, tree.y
 	for _, tree := range game.trees {
-		if pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+		if tree.state != TreeStateSeed && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
 			pMoved.x = game.player.x
 			pMoved.y = game.player.y
 		}
@@ -159,6 +172,24 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
+func (game *Game) PopulateTrees(screen tcell.Screen) {
+	states := []int{
+		TreeStateSeed,
+		TreeStateSapling,
+		TreeStateAdult,
+	}
+	trees := make(map[int]*Tree)
+	num := rand.Intn(30) + 10
+	for i := 0; i < num; i++ {
+		state := states[rand.Intn(3)]
+		x := rand.Intn(game.border.x2-1) + game.border.x1
+		y := rand.Intn(game.border.y2-1) + game.border.y1
+		trees[i] = &Tree{x, y, state}
+	}
+
+	game.trees = trees
+}
+
 func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
 	newTrees := make(map[int]*Tree)
 	for index, tree := range game.trees {
@@ -169,6 +200,12 @@ func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
 		} else if tree.state == TreeStateTrunk { // Trunks get chopped to stumps
 			newTrees[index] = &Tree{tree.x, tree.y, TreeStateStump}
 		} else if tree.state == TreeStateStump { // Stumps get removed
+			// newTrees[index] = &Tree{tree.x, tree.y, TreeStateRemoved}
+		} else if tree.state == TreeStateSeed { // Seeds are unaffected by chop
+			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		} else if tree.state == TreeStateSapling { // Saplings become sapling stumps
+			newTrees[index] = &Tree{tree.x, tree.y, TreeStateSaplingStump}
+		} else if tree.state == TreeStateSaplingStump { // Sapling stumps get removed
 			// newTrees[index] = &Tree{tree.x, tree.y, TreeStateRemoved}
 		} else { // State unaccounted for
 			panicMsg := fmt.Sprintf("Unaccounted tree state in DecrementTree(): %v", tree.state)
