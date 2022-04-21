@@ -39,10 +39,10 @@ const (
 	TreeStateSapling = 1
 	TreeStateAdult   = 2
 	// Harvested tree states
-	TreeStateRemoved      = 10
-	TreeStateStump        = 11
-	TreeStateTrunk        = 12
-	TreeStateSaplingStump = 13
+	TreeStateRemoved   = 10
+	TreeStateStump     = 11
+	TreeStateTrunk     = 12
+	TreeStateStumpling = 13
 	// Growth chances (per game tick)
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
@@ -91,7 +91,7 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
-		case TreeStateSaplingStump:
+		case TreeStateStumpling:
 			screen.SetContent(tree.x, tree.y, '▕', nil, tcell.StyleDefault)
 			screen.SetContent(tree.x+1, tree.y, '▏', nil, tcell.StyleDefault)
 		case TreeStateSeed:
@@ -238,19 +238,21 @@ func (game *Game) PopulateTrees(screen tcell.Screen) {
 }
 
 func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
+	// adult ------> trunk
+	// trunk ------> stump
+	// stump ------> removed
+	// sapling ----> stumpling
+	// stumpling --> removed
 	for index, tree := range game.trees {
 		if index == indexToRemove {
-			if tree.state == TreeStateAdult { // Adults get chopped to trunks
-				game.trees[index] = &Tree{tree.x, tree.y, TreeStateTrunk}
-			} else if tree.state == TreeStateTrunk { // Trunks get chopped to stumps
-				game.trees[index] = &Tree{tree.x, tree.y, TreeStateStump}
-			} else if tree.state == TreeStateStump { // Stumps get removed
-				delete(game.trees, index)
-			} else if tree.state == TreeStateSeed { // Seeds are unaffected by chop
-				game.trees[index] = &Tree{tree.x, tree.y, tree.state}
-			} else if tree.state == TreeStateSapling { // Saplings become sapling stumps
-				game.trees[index] = &Tree{tree.x, tree.y, TreeStateSaplingStump}
-			} else if tree.state == TreeStateSaplingStump { // Sapling stumps get removed
+			switch tree.state {
+			case TreeStateAdult:
+				game.trees[index].state = TreeStateTrunk
+			case TreeStateTrunk:
+				game.trees[index].state = TreeStateStump
+			case TreeStateSapling:
+				game.trees[index].state = TreeStateStumpling
+			case TreeStateStump, TreeStateStumpling:
 				delete(game.trees, index)
 			}
 		}
