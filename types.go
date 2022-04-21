@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/gdamore/tcell"
@@ -239,28 +238,23 @@ func (game *Game) PopulateTrees(screen tcell.Screen) {
 }
 
 func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
-	newTrees := make(map[int]*Tree)
 	for index, tree := range game.trees {
-		if index != indexToRemove {
-			newTrees[index] = tree
-		} else if tree.state == TreeStateAdult { // Adults get chopped to trunks
-			newTrees[index] = &Tree{tree.x, tree.y, TreeStateTrunk}
-		} else if tree.state == TreeStateTrunk { // Trunks get chopped to stumps
-			newTrees[index] = &Tree{tree.x, tree.y, TreeStateStump}
-		} else if tree.state == TreeStateStump { // Stumps get removed
-			// newTrees[index] = &Tree{tree.x, tree.y, TreeStateRemoved}
-		} else if tree.state == TreeStateSeed { // Seeds are unaffected by chop
-			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-		} else if tree.state == TreeStateSapling { // Saplings become sapling stumps
-			newTrees[index] = &Tree{tree.x, tree.y, TreeStateSaplingStump}
-		} else if tree.state == TreeStateSaplingStump { // Sapling stumps get removed
-			// newTrees[index] = &Tree{tree.x, tree.y, TreeStateRemoved}
-		} else { // State unaccounted for
-			panicMsg := fmt.Sprintf("Unaccounted tree state in DecrementTree(): %v", tree.state)
-			panic(panicMsg)
+		if index == indexToRemove {
+			if tree.state == TreeStateAdult { // Adults get chopped to trunks
+				game.trees[index] = &Tree{tree.x, tree.y, TreeStateTrunk}
+			} else if tree.state == TreeStateTrunk { // Trunks get chopped to stumps
+				game.trees[index] = &Tree{tree.x, tree.y, TreeStateStump}
+			} else if tree.state == TreeStateStump { // Stumps get removed
+				delete(game.trees, index)
+			} else if tree.state == TreeStateSeed { // Seeds are unaffected by chop
+				game.trees[index] = &Tree{tree.x, tree.y, tree.state}
+			} else if tree.state == TreeStateSapling { // Saplings become sapling stumps
+				game.trees[index] = &Tree{tree.x, tree.y, TreeStateSaplingStump}
+			} else if tree.state == TreeStateSaplingStump { // Sapling stumps get removed
+				delete(game.trees, index)
+			}
 		}
 	}
-	game.trees = newTrees
 }
 
 func (game *Game) Chop(screen tcell.Screen, dir int) {
