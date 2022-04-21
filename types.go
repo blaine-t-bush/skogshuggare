@@ -178,16 +178,12 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
-func (game *Game) AddSeeds() {
-	// Create copy of trees map
-	newTrees := make(map[int]*Tree)
-	for index, tree := range game.trees {
-		newTrees[index] = &Tree{tree.x, tree.y, tree.state}
-	}
+func (game *Game) AddSeeds() int {
+	seedCount := 0
 
 	// Get max index of current trees map
 	var maxIndex int
-	for index := range newTrees {
+	for index := range game.trees {
 		if maxIndex < index {
 			maxIndex = index
 		}
@@ -198,46 +194,49 @@ func (game *Game) AddSeeds() {
 		if rand.Float64() <= SeedCreationChance {
 			x := rand.Intn(game.border.x2-1) + game.border.x1
 			y := rand.Intn(game.border.y2-1) + game.border.y1
-			newTrees[maxIndex+i] = &Tree{x, y, TreeStateSeed}
+			game.trees[maxIndex+i] = &Tree{x, y, TreeStateSeed}
+			seedCount++
 		}
 	}
 
-	game.trees = newTrees
+	return seedCount
 }
 
-func (game *Game) GrowTrees() {
-	newTrees := make(map[int]*Tree)
+func (game *Game) GrowTrees() int {
+	growthCount := 0
 	for index, tree := range game.trees {
-		if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed { // Seeds grow to saplings
-			newTrees[index] = &Tree{tree.x, tree.y, TreeStateSapling}
-		} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling { // Saplings grow to adults
-			newTrees[index] = &Tree{tree.x, tree.y, TreeStateAdult}
-		} else {
-			newTrees[index] = &Tree{tree.x, tree.y, tree.state}
+		if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
+			game.trees[index].state = TreeStateSapling
+			growthCount++
+		} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
+			game.trees[index].state = TreeStateAdult
+			growthCount++
 		}
 	}
-	game.trees = newTrees
+
+	return growthCount
 }
 
-func (game *Game) PopulateTrees(screen tcell.Screen) {
+func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	states := []int{
 		TreeStateSeed,
 		TreeStateSapling,
 		TreeStateAdult,
 	}
-	trees := make(map[int]*Tree)
-	num := rand.Intn(30) + 10
-	for i := 0; i < num; i++ {
+	maxTreeCount := rand.Intn(30) + 10
+	treeCount := 0
+	for i := 0; i < maxTreeCount; i++ {
 		state := states[rand.Intn(3)]
 		x := rand.Intn(game.border.x2-1) + game.border.x1
 		y := rand.Intn(game.border.y2-1) + game.border.y1
-		trees[i] = &Tree{x, y, state}
+		game.trees[i] = &Tree{x, y, state}
+		treeCount++
 	}
 
-	game.trees = trees
+	return treeCount
 }
 
-func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
+func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) bool {
 	// adult ------> trunk
 	// trunk ------> stump
 	// stump ------> removed
@@ -248,18 +247,25 @@ func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) {
 			switch tree.state {
 			case TreeStateAdult:
 				game.trees[index].state = TreeStateTrunk
+				return true
 			case TreeStateTrunk:
 				game.trees[index].state = TreeStateStump
+				return true
 			case TreeStateSapling:
 				game.trees[index].state = TreeStateStumpling
+				return true
 			case TreeStateStump, TreeStateStumpling:
 				delete(game.trees, index)
+				return true
 			}
 		}
 	}
+
+	return false
 }
 
-func (game *Game) Chop(screen tcell.Screen, dir int) {
+func (game *Game) Chop(screen tcell.Screen, dir int) int {
+	choppedCount := 0
 outside:
 	for index, tree := range game.trees {
 		if tree.state != -1 {
@@ -269,30 +275,32 @@ outside:
 			isLeft := tree.y == game.player.y && tree.x == game.player.x-2
 			switch dir {
 			case DirOmni:
-				if isAbove || isRight || isBelow || isLeft {
-					game.DecrementTree(screen, index)
+				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, index) {
+					choppedCount++
 				}
 			case DirUp:
-				if isAbove {
-					game.DecrementTree(screen, index)
+				if isAbove && game.DecrementTree(screen, index) {
+					choppedCount++
 					break outside
 				}
 			case DirRight:
-				if isRight {
-					game.DecrementTree(screen, index)
+				if isRight && game.DecrementTree(screen, index) {
+					choppedCount++
 					break outside
 				}
 			case DirDown:
-				if isBelow {
-					game.DecrementTree(screen, index)
+				if isBelow && game.DecrementTree(screen, index) {
+					choppedCount++
 					break outside
 				}
 			case DirLeft:
-				if isLeft {
-					game.DecrementTree(screen, index)
+				if isLeft && game.DecrementTree(screen, index) {
+					choppedCount++
 					break outside
 				}
 			}
 		}
 	}
+
+	return choppedCount
 }
