@@ -22,7 +22,7 @@ type Border struct {
 type Tree struct {
 	x     int // Trunk left corner x-coordinate
 	y     int // Trunk left corner y-coordinate
-	state int // -1: removed; 0: stump; 1: tall stump; 2: fully grown
+	state int // See constants
 }
 
 const (
@@ -78,39 +78,21 @@ func (game *Game) DrawBorder(screen tcell.Screen) {
 }
 
 func (game *Game) DrawTrees(screen tcell.Screen) {
-	//  /\
-	// /__\
-	//  ||
 	for _, tree := range game.trees {
 		switch tree.state {
 		case TreeStateStump:
-			screen.SetContent(tree.x, tree.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, '▄', nil, tcell.StyleDefault)
 		case TreeStateTrunk:
-			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x, tree.y-1, tcell.RuneULCorner, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneURCorner, nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, '█', nil, tcell.StyleDefault)
 		case TreeStateStumpling:
-			screen.SetContent(tree.x, tree.y, '▕', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, '▏', nil, tcell.StyleDefault)
-		case TreeStateSeed:
-			screen.SetContent(tree.x, tree.y, '⎽', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, '⎽', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, '╻', nil, tcell.StyleDefault)
 		case TreeStateSapling:
-			screen.SetContent(tree.x, tree.y, '▕', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, '▏', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x, tree.y-1, '/', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y-1, '\\', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, '┃', nil, tcell.StyleDefault)
+		case TreeStateSeed:
+			screen.SetContent(tree.x, tree.y, '.', nil, tcell.StyleDefault)
 		case TreeStateAdult:
-			screen.SetContent(tree.x, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y, tcell.RuneVLine, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x-1, tree.y-1, '/', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x, tree.y-1, tcell.RuneTTee, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y-1, tcell.RuneTTee, nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+2, tree.y-1, '\\', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x, tree.y-2, '/', nil, tcell.StyleDefault)
-			screen.SetContent(tree.x+1, tree.y-2, '\\', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y, '█', nil, tcell.StyleDefault)
+			screen.SetContent(tree.x, tree.y-1, '▄', nil, tcell.StyleDefault)
 		}
 	}
 }
@@ -149,12 +131,10 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 		}
 	}
 
-	// TODO
 	// Prevent update if player would collide with tree trunks, but not with
 	// tree canopies.
-	// Trunk bases and stumps are located at tree.x, tree.y and tree.x+1, tree.y
 	for _, tree := range game.trees {
-		if tree.state != TreeStateRemoved && pMoved.y == tree.y && (pMoved.x == tree.x || pMoved.x == tree.x+1) {
+		if tree.state != TreeStateRemoved && pMoved.y == tree.y && pMoved.x == tree.x {
 			pMoved.x = game.player.x
 			pMoved.y = game.player.y
 		}
@@ -269,10 +249,10 @@ func (game *Game) Chop(screen tcell.Screen, dir int) int {
 outside:
 	for index, tree := range game.trees {
 		if tree.state != -1 {
-			isAbove := tree.y == game.player.y-1 && (tree.x == game.player.x || tree.x+1 == game.player.x)
+			isAbove := tree.y == game.player.y-1 && tree.x == game.player.x
 			isRight := tree.y == game.player.y && tree.x == game.player.x+1
-			isBelow := tree.y == game.player.y+1 && (tree.x == game.player.x || tree.x+1 == game.player.x)
-			isLeft := tree.y == game.player.y && tree.x == game.player.x-2
+			isBelow := tree.y == game.player.y+1 && tree.x == game.player.x
+			isLeft := tree.y == game.player.y && tree.x == game.player.x-1
 			switch dir {
 			case DirOmni:
 				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, index) {
