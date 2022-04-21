@@ -158,7 +158,7 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
-func (game *Game) AddSeeds() int {
+func (game *Game) AddSeeds() int { // FIXME determine why seeds sometimes disappear
 	seedCount := 0
 
 	// Get max index of current trees map
@@ -198,15 +198,15 @@ func (game *Game) GrowTrees() int {
 }
 
 func (game *Game) PopulateTrees(screen tcell.Screen) int {
-	states := []int{
-		TreeStateSeed,
-		TreeStateSapling,
-		TreeStateAdult,
-	}
+	// states := []int{
+	// 	TreeStateSeed,
+	// 	TreeStateSapling,
+	// 	TreeStateAdult,
+	// }
 	maxTreeCount := rand.Intn(30) + 10
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
-		state := states[rand.Intn(3)]
+		state := TreeStateSeed //states[rand.Intn(3)]
 		x := rand.Intn(game.border.x2-1) + game.border.x1
 		y := rand.Intn(game.border.y2-1) + game.border.y1
 		game.trees[i] = &Tree{x, y, state}
