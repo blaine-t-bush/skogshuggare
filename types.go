@@ -222,23 +222,25 @@ func (game *Game) DecrementTree(screen tcell.Screen, indexToRemove int) bool {
 	// stump ------> removed
 	// sapling ----> stumpling
 	// stumpling --> removed
-	for index, tree := range game.trees {
-		if index == indexToRemove {
-			switch tree.state {
-			case TreeStateAdult:
-				game.trees[index].state = TreeStateTrunk
-				return true
-			case TreeStateTrunk:
-				game.trees[index].state = TreeStateStump
-				return true
-			case TreeStateSapling:
-				game.trees[index].state = TreeStateStumpling
-				return true
-			case TreeStateStump, TreeStateStumpling:
-				delete(game.trees, index)
-				return true
-			}
-		}
+	tree, exists := game.trees[indexToRemove]
+
+	if !exists {
+		return false
+	}
+
+	switch tree.state {
+	case TreeStateAdult:
+		tree.state = TreeStateTrunk
+		return true
+	case TreeStateTrunk:
+		tree.state = TreeStateStump
+		return true
+	case TreeStateSapling:
+		tree.state = TreeStateStumpling
+		return true
+	case TreeStateStump, TreeStateStumpling:
+		delete(game.trees, indexToRemove)
+		return true
 	}
 
 	return false
