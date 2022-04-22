@@ -84,7 +84,16 @@ func readMap(fileName string) World {
 		x++
 	}
 
-	return World{width, height, world_content}
+	_borders := make(map[Coordinate]int)
+
+	for c := range world_content {
+		border, isBorder := IsBorder(width, height, c)
+		if isBorder {
+			_borders[c] = border
+		}
+	}
+
+	return World{width, height, _borders, world_content}
 }
 
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {

@@ -42,9 +42,9 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 			objViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
 			objViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
 
-			borderResponse, isBorder := game.IsBorder(coord)
+			border, isBorder := game.world.borders[coord]
 			if isBorder {
-				switch borderResponse {
+				switch border {
 				case TopBorder, BottomBorder:
 					screen.SetContent(objViewportX, objViewportY, tcell.RuneHLine, nil, tcell.StyleDefault)
 				case RightBorder, LeftBorder:
@@ -113,7 +113,7 @@ func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
 	screen.SetContent(actor.position.x, actor.position.y, ' ', nil, tcell.StyleDefault)
 }
 
-func (game *Game) IsBorder(coord Coordinate) (response int, ok bool) {
+func IsBorder(width int, height int, coord Coordinate) (response int, ok bool) {
 	/*
 		width = 3
 		height = 3
@@ -126,14 +126,14 @@ func (game *Game) IsBorder(coord Coordinate) (response int, ok bool) {
 		bottom border (x = 0..width - 1, y = height - 1)
 		left border (x = 0, y = 1..height - 2)
 	*/
-	isTopBorder := (coord.x >= 0 && coord.x <= game.world.width-1) && coord.y == 0
-	isRightBorder := (coord.x == game.world.width-1) && (coord.y >= 1 && coord.y <= game.world.height-1)
-	isBottomBorder := (coord.x >= 0 && coord.x <= game.world.width-1) && coord.y == game.world.height
-	isLeftBorder := (coord.x == 0) && (coord.y >= 1 && coord.y <= game.world.height-1)
+	isTopBorder := (coord.x >= 0 && coord.x <= width-1) && coord.y == 0
+	isRightBorder := (coord.x == width-1) && (coord.y >= 1 && coord.y <= height-1)
+	isBottomBorder := (coord.x >= 0 && coord.x <= width-1) && coord.y == height
+	isLeftBorder := (coord.x == 0) && (coord.y >= 1 && coord.y <= height-1)
 	isTopLeftCorner := coord.x == 0 && coord.y == 0
-	isTopRightCorner := coord.x == game.world.width-1 && coord.y == 0
-	isBottomRightCorner := coord.x == game.world.width-1 && coord.y == game.world.height
-	isBottomLeftCorner := coord.x == 0 && coord.y == game.world.height
+	isTopRightCorner := coord.x == width-1 && coord.y == 0
+	isBottomRightCorner := coord.x == width-1 && coord.y == height
+	isBottomLeftCorner := coord.x == 0 && coord.y == height
 
 	if isTopBorder {
 		if isTopLeftCorner {

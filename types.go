@@ -31,6 +31,7 @@ type Object struct {
 type World struct {
 	width   int
 	height  int
+	borders map[Coordinate]int // Store the borders in a lookup-table instead of running checks every single loop
 	content map[Coordinate]interface{}
 }
 
