@@ -158,7 +158,7 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.Draw(screen)
 }
 
-func (game *Game) AddSeeds() int { // FIXME determine why seeds sometimes disappear
+func (game *Game) AddSeeds() int {
 	seedCount := 0
 
 	// Get max index of current trees map
@@ -172,8 +172,23 @@ func (game *Game) AddSeeds() int { // FIXME determine why seeds sometimes disapp
 	// Possibly create new seeds
 	for i := 1; i <= SeedCreationMax; i++ {
 		if rand.Float64() <= SeedCreationChance {
-			x := rand.Intn(game.border.x2-1) + game.border.x1
-			y := rand.Intn(game.border.y2-1) + game.border.y1
+			var x, y int
+			overlaps := false
+			// Prevent seed from spawning on occupied point
+			for {
+				x = rand.Intn(game.border.x2-1) + game.border.x1
+				y = rand.Intn(game.border.y2-1) + game.border.y1
+				for _, tree := range game.trees {
+					if x == tree.x && y == tree.y {
+						overlaps = true
+						break
+					}
+				}
+				if !overlaps {
+					break
+				}
+
+			}
 			game.trees[maxIndex+i] = &Tree{x, y, TreeStateSeed}
 			seedCount++
 		}
@@ -250,7 +265,7 @@ func (game *Game) Chop(screen tcell.Screen, dir int) int {
 	choppedCount := 0
 outside:
 	for index, tree := range game.trees {
-		if tree.state != -1 {
+		if tree.state != TreeStateRemoved && tree.state != TreeStateSeed {
 			isAbove := tree.y == game.player.y-1 && tree.x == game.player.x
 			isRight := tree.y == game.player.y && tree.x == game.player.x+1
 			isBelow := tree.y == game.player.y+1 && tree.x == game.player.x
