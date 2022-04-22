@@ -35,12 +35,15 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player: Player{5, 5, 100},
-		border: Border{0, w - 1, 0, h - 1, 1},
-		trees:  map[int]*Tree{},
-		world:  readMap("skog.karta"),
-		exit:   false,
+		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100},
+		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100},
+		border:   Border{0, w - 1, 0, h - 1, 1},
+		world:    readMap("kartor/skog.karta"),
+		exit:     false,
 	}
+
+	// Randomly seed map with trees in various states.
+	game.PopulateTrees(screen)
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
@@ -88,9 +91,6 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	// Wait for this goroutine to finish before resuming main().
 	defer wg.Done()
 
-	// Randomly seed map with trees in various states.
-	game.PopulateTrees(screen)
-
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
@@ -105,6 +105,8 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 }
 
 func (game *Game) Update(screen tcell.Screen) {
+	// Listen for keyboard events for player actions,
+	// or terminal resizing events to re-draw the screen.
 	ev := screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
@@ -113,13 +115,13 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.exit = true
 			return
 		case tcell.KeyUp:
-			game.MovePlayer(screen, 1, DirUp)
+			game.MoveActor(screen, ActorPlayer, 1, DirUp)
 		case tcell.KeyRight:
-			game.MovePlayer(screen, 1, DirRight)
+			game.MoveActor(screen, ActorPlayer, 1, DirRight)
 		case tcell.KeyDown:
-			game.MovePlayer(screen, 1, DirDown)
+			game.MoveActor(screen, ActorPlayer, 1, DirDown)
 		case tcell.KeyLeft:
-			game.MovePlayer(screen, 1, DirLeft)
+			game.MoveActor(screen, ActorPlayer, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune(' '):
@@ -137,6 +139,8 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
-	game.AddSeeds()
+
+	// Update the non-player parts of game state.
+	game.MoveActor(screen, ActorSquirrel, 1, DirRandom)
 	game.GrowTrees()
 }
