@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,9 +35,10 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player: Player{5, 5},
+		player: Player{5, 5, 100},
 		border: Border{0, w - 1, 0, h - 1, 1},
 		trees:  map[int]*Tree{},
+		world:  readMap("skog.karta"),
 		exit:   false,
 	}
 
@@ -46,15 +50,46 @@ func main() {
 	screen.Fini()
 }
 
+func readMap(fileName string) World {
+	filebuffer, err := ioutil.ReadFile(fileName)
+	world_content := make(map[Coordinate]interface{})
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	filedata := string(filebuffer)
+	data := bufio.NewScanner(strings.NewReader(filedata))
+	data.Split(bufio.ScanRunes)
+	width := 0
+	height := 0
+	xmax := false
+	x := 0
+	for data.Scan() {
+		if data.Text()[0] == '\n' {
+			height++
+			x = 0
+			xmax = true
+			continue
+		} else if data.Text()[0] == '#' {
+			world_content[Coordinate{x, height}] = Object{'#', true}
+		}
+		if !xmax {
+			width++
+		}
+		x++
+	}
+
+	return World{width, height, world_content}
+}
+
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	// Wait for this goroutine to finish before resuming main().
 	defer wg.Done()
 
 	// Randomly seed map with trees in various states.
 	game.PopulateTrees(screen)
-
-	// Perform first draw.
-	game.Draw(screen)
 
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)

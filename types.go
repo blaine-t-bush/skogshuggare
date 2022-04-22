@@ -7,8 +7,9 @@ import (
 )
 
 type Player struct {
-	x int // Player x-coordinate
-	y int // Player y-coordinate
+	x             int // Player x-coordinate
+	y             int // Player y-coordinate
+	vision_radius int // Player vision radius
 }
 
 type Border struct {
@@ -23,6 +24,11 @@ type Tree struct {
 	x     int // Trunk left corner x-coordinate
 	y     int // Trunk left corner y-coordinate
 	state int // See constants
+}
+
+type Object struct {
+	char       rune
+	collidable bool
 }
 
 const (
@@ -50,10 +56,22 @@ const (
 	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
 )
 
+type Coordinate struct {
+	x int
+	y int
+}
+
+type World struct {
+	width   int
+	height  int
+	content map[Coordinate]interface{}
+}
+
 type Game struct {
 	player Player
 	border Border
 	trees  map[int]*Tree
+	world  World
 	exit   bool
 }
 
@@ -102,14 +120,73 @@ func (game *Game) ClearPlayer(screen tcell.Screen) {
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
-	screen.SetContent(game.player.x, game.player.y, '@', nil, tcell.StyleDefault)
+	w, h := screen.Size()
+	screen.SetContent(w/2, h/2, '@', nil, tcell.StyleDefault) // Draw the player at the "center" of the view
+}
+
+// Only draw things within the player view range
+func (game *Game) DrawViewport(screen tcell.Screen) {
+	player_position := Coordinate{game.player.x, game.player.y}
+	game.DrawPlayer(screen)
+
+	/*
+		view_radius = 5
+		y_up = 5
+		y_down = -5
+		x_left = 5
+		x_right = -5
+				.....................
+				.....................
+				.....................
+				.....................
+				.....................
+				..........@..........
+				.....................
+				.....................
+				.....................
+				.....................
+				.....................
+		Player pos = (5,5)
+	*/
+
+	for x := player_position.x - game.player.vision_radius; x <= player_position.x+game.player.vision_radius; x++ {
+		for y := player_position.y - game.player.vision_radius; y <= player_position.y+game.player.vision_radius; y++ {
+			obj, found := game.world.content[Coordinate{x, y}]
+			if found {
+				w, h := screen.Size()
+				obj_viewport_x := (w / 2) + (x - game.player.x) // Player_viewport_x + Object_real_x - Player_real_x
+				obj_viewport_y := (h / 2) + (y - game.player.y) // Player_viewport_y + Object_real_y - Player_real_y
+				switch obj.(type) {
+				case Object:
+					// Draw object
+					screen.SetContent(obj_viewport_x, obj_viewport_y, '#', nil, tcell.StyleDefault)
+				case *Tree:
+					tree := obj.(*Tree)
+					// Draw tree
+					switch tree.state {
+					case TreeStateStump:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '▄', nil, tcell.StyleDefault)
+					case TreeStateTrunk:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '█', nil, tcell.StyleDefault)
+					case TreeStateStumpling:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '╻', nil, tcell.StyleDefault)
+					case TreeStateSapling:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '┃', nil, tcell.StyleDefault)
+					case TreeStateSeed:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '.', nil, tcell.StyleDefault)
+					case TreeStateAdult:
+						screen.SetContent(obj_viewport_x, obj_viewport_y, '█', nil, tcell.StyleDefault)
+						screen.SetContent(obj_viewport_x, obj_viewport_y-1, '▄', nil, tcell.StyleDefault)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (game *Game) Draw(screen tcell.Screen) {
 	screen.Clear()
-	game.DrawBorder(screen)
-	game.DrawPlayer(screen)
-	game.DrawTrees(screen)
+	game.DrawViewport(screen)
 	screen.Show()
 }
 
@@ -118,44 +195,39 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 
 	// Determine (potential) new location.
 	pMoved := game.player
+	newX := game.player.x
+	newY := game.player.y
+
 	if len != 0 {
 		switch dir {
 		case DirUp:
-			pMoved.y = game.player.y - len
+			newY = game.player.y - len
 		case DirRight:
-			pMoved.x = game.player.x + len
+			newX = game.player.x + len
 		case DirDown:
-			pMoved.y = game.player.y + len
+			newY = game.player.y + len
 		case DirLeft:
-			pMoved.x = game.player.x - len
+			newX = game.player.x - len
 		}
 	}
 
-	// Prevent update if player would collide with tree trunks, but not with
-	// tree canopies.
-	for _, tree := range game.trees {
-		if tree.state != TreeStateRemoved && pMoved.y == tree.y && pMoved.x == tree.x {
-			pMoved.x = game.player.x
-			pMoved.y = game.player.y
+	// Prevent player from moving through an impassable object
+	obj, exists := game.world.content[Coordinate{newX, newY}]
+	if exists {
+		switch obj.(type) {
+		case Object, *Tree:
+			newY = pMoved.y
+			newX = pMoved.x
+		default:
+			pMoved.y = newY
+			pMoved.x = newX
 		}
-	}
-
-	// Prevent update if new location is past left or right boundaries.
-	if pMoved.x <= game.border.x1 {
-		pMoved.x = game.border.x1 + game.border.t
-	} else if pMoved.x >= game.border.x2 {
-		pMoved.x = game.border.x2 - game.border.t
-	}
-
-	// Prevent update if new location is past top or bottom boundaries.
-	if pMoved.y <= game.border.y1 {
-		pMoved.y = game.border.y1 + game.border.t
-	} else if pMoved.y >= game.border.y2 {
-		pMoved.y = game.border.y2 - game.border.t
+	} else {
+		pMoved.y = newY
+		pMoved.x = newX
 	}
 
 	game.player = pMoved
-	game.Draw(screen)
 }
 
 func (game *Game) AddSeeds() int {
@@ -199,13 +271,18 @@ func (game *Game) AddSeeds() int {
 
 func (game *Game) GrowTrees() int {
 	growthCount := 0
-	for index, tree := range game.trees {
-		if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
-			game.trees[index].state = TreeStateSapling
-			growthCount++
-		} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
-			game.trees[index].state = TreeStateAdult
-			growthCount++
+
+	for _, object := range game.world.content {
+		switch object.(type) {
+		case *Tree:
+			tree := object.(*Tree)
+			if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
+				tree.state = TreeStateSapling
+				growthCount++
+			} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
+				tree.state = TreeStateAdult
+				growthCount++
+			}
 		}
 	}
 
@@ -222,9 +299,9 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
 		state := TreeStateSeed //states[rand.Intn(3)]
-		x := rand.Intn(game.border.x2-1) + game.border.x1
-		y := rand.Intn(game.border.y2-1) + game.border.y1
-		game.trees[i] = &Tree{x, y, state}
+		x := rand.Intn(game.world.width)
+		y := rand.Intn(game.world.height)
+		game.world.content[Coordinate{x, y}] = &Tree{x, y, state}
 		treeCount++
 	}
 
