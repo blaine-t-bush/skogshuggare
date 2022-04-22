@@ -6,9 +6,16 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+type Coordinate struct {
+	x int
+	y int
+}
+
 type Actor struct {
-	x int // Player x-coordinate
-	y int // Player y-coordinate
+	x            int // Player x-coordinate
+	y            int // Player y-coordinate
+	destinationX int
+	destinationY int
 }
 
 type Border struct {
@@ -41,6 +48,7 @@ const (
 	DirLeft   = 3
 	DirOmni   = 4
 	DirRandom = 5
+	DirNone   = 6
 	// Living tree states
 	TreeStateSeed    = 0
 	TreeStateSapling = 1
@@ -139,6 +147,131 @@ func (game *Game) Draw(screen tcell.Screen) {
 	screen.Show()
 }
 
+func (game *Game) GetNonActorBlockedPoints() []Coordinate {
+	// Get slice of all blocked points
+	var blockedPoints []Coordinate
+
+	// Add trees to blocked points
+	for _, tree := range game.trees {
+		blockedPoints = append(blockedPoints, Coordinate{tree.x, tree.y})
+	}
+
+	// Add borders to blocked points
+	for c := game.border.x1 + 1; c <= game.border.x2-1; c++ {
+		blockedPoints = append(blockedPoints, Coordinate{c, game.border.y1})
+		blockedPoints = append(blockedPoints, Coordinate{c, game.border.y2})
+	}
+
+	for r := game.border.y1 + 1; r <= game.border.y2-1; r++ {
+		blockedPoints = append(blockedPoints, Coordinate{game.border.x1, r})
+		blockedPoints = append(blockedPoints, Coordinate{game.border.x2, r})
+	}
+
+	return blockedPoints
+}
+
+func (game *Game) GetAllBlockedPoints() []Coordinate {
+	// Get slice of all blocked points
+	var blockedPoints []Coordinate
+	// Add player to blocked points
+	blockedPoints = append(blockedPoints, Coordinate{game.player.x, game.player.y})
+
+	// Add squirrel to blocked points
+	blockedPoints = append(blockedPoints, Coordinate{game.squirrel.x, game.squirrel.y})
+
+	// Add trees to blocked points
+	for _, tree := range game.trees {
+		blockedPoints = append(blockedPoints, Coordinate{tree.x, tree.y})
+	}
+
+	// Add borders to blocked points
+	for c := game.border.x1 + 1; c <= game.border.x2-1; c++ {
+		blockedPoints = append(blockedPoints, Coordinate{c, game.border.y1})
+		blockedPoints = append(blockedPoints, Coordinate{c, game.border.y2})
+	}
+
+	for r := game.border.y1 + 1; r <= game.border.y2-1; r++ {
+		blockedPoints = append(blockedPoints, Coordinate{game.border.x1, r})
+		blockedPoints = append(blockedPoints, Coordinate{game.border.x2, r})
+	}
+
+	return blockedPoints
+}
+
+func (game *Game) PointIsBlocked(coordinate Coordinate, blockedPoints []Coordinate) bool {
+	for _, blockedPoint := range blockedPoints {
+		if coordinate == blockedPoint {
+			return true
+		}
+	}
+	return false
+}
+
+func (game *Game) PathActor(screen tcell.Screen, actorType int) int {
+	// Given current position (x, y) and target position (destinationX, destinationY)
+	// determine the optimal next location to move to.
+	var actor Actor
+	switch actorType {
+	case ActorPlayer:
+		actor = game.player
+	case ActorSquirrel:
+		actor = game.squirrel
+	}
+
+	if actor.x == actor.destinationX && actor.y == actor.destinationY {
+		return DirNone
+	} else {
+		deltaX := actor.destinationX - actor.x
+		deltaY := actor.destinationY - actor.y
+		if deltaX >= deltaY && deltaX > 0 {
+			return DirRight
+		} else if deltaX >= deltaY && deltaX < 0 {
+			return DirLeft
+		} else if deltaY > 0 {
+			return DirDown
+		} else if deltaY < 0 {
+			return DirUp
+		}
+	}
+
+	return DirNone
+}
+
+func (game *Game) PlantSeed(x int, y int) bool {
+	// Get max index of current trees map
+	var maxIndex int
+	for index := range game.trees {
+		if maxIndex < index {
+			maxIndex = index
+		}
+	}
+
+	// Check if seed overlaps with existing trees
+	// If it does not overlap, plant it
+	if !game.PointIsBlocked(Coordinate{x, y}, game.GetNonActorBlockedPoints()) {
+		game.trees[maxIndex+1] = &Tree{x, y, TreeStateSeed}
+		return true
+	} else {
+		return false
+	}
+}
+
+func GetRandomDirection() int {
+	randInt := rand.Intn(4)
+	switch randInt {
+	case 0:
+		return DirUp
+	case 1:
+		return DirRight
+	case 2:
+		return DirDown
+	case 3:
+		return DirLeft
+	default:
+		return DirNone
+	}
+}
+
 func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int) {
 	var actor Actor
 	switch actorType {
@@ -149,22 +282,13 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 	}
 
 	game.ClearActor(screen, actorType)
-
-	// Determine (potential) new location.
-	if dir == DirRandom {
-		randInt := rand.Intn(4)
-		switch randInt {
-		case 0:
-			dir = DirUp
-		case 1:
-			dir = DirRight
-		case 2:
-			dir = DirDown
-		case 3:
-			dir = DirLeft
-		}
-	}
 	aMoved := actor
+
+	// Determine potential destination
+	if dir == DirRandom {
+		dir = GetRandomDirection()
+	}
+
 	if len != 0 {
 		switch dir {
 		case DirUp:
@@ -175,30 +299,15 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 			aMoved.y = actor.y + len
 		case DirLeft:
 			aMoved.x = actor.x - len
+		default:
+			break
 		}
 	}
 
-	// Prevent update if player would collide with tree trunks, but not with
-	// tree canopies.
-	for _, tree := range game.trees {
-		if tree.state != TreeStateRemoved && aMoved.y == tree.y && aMoved.x == tree.x {
-			aMoved.x = actor.x
-			aMoved.y = actor.y
-		}
-	}
-
-	// Prevent update if new location is past left or right boundaries.
-	if aMoved.x <= game.border.x1 {
-		aMoved.x = game.border.x1 + game.border.t
-	} else if aMoved.x >= game.border.x2 {
-		aMoved.x = game.border.x2 - game.border.t
-	}
-
-	// Prevent update if new location is past top or bottom boundaries.
-	if aMoved.y <= game.border.y1 {
-		aMoved.y = game.border.y1 + game.border.t
-	} else if aMoved.y >= game.border.y2 {
-		aMoved.y = game.border.y2 - game.border.t
+	// Check if potential destination is blocked
+	if game.PointIsBlocked(Coordinate{aMoved.x, aMoved.y}, game.GetNonActorBlockedPoints()) {
+		aMoved.x = actor.x
+		aMoved.y = actor.y
 	}
 
 	switch actorType {
@@ -207,6 +316,28 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 	case ActorSquirrel:
 		game.squirrel = aMoved
 	}
+}
+
+func (game *Game) UpdateSquirrel(screen tcell.Screen) {
+	if game.squirrel.x == game.squirrel.destinationX && game.squirrel.y == game.squirrel.destinationY {
+		// If at destination, attempt to plant seed and get new destination.
+		game.PlantSeed(game.squirrel.x, game.squirrel.y)
+		var x, y int
+		blockedPoints := game.GetNonActorBlockedPoints()
+		for {
+			x = rand.Intn(game.border.x2-1) + game.border.x1
+			y = rand.Intn(game.border.y2-1) + game.border.y1
+			if !game.PointIsBlocked(Coordinate{x, y}, blockedPoints) {
+				break
+			}
+		}
+		game.squirrel.destinationX = x
+		game.squirrel.destinationY = y
+	} else {
+		// If not at destination, find path and move towards destination.
+		game.MoveActor(screen, ActorSquirrel, 1, game.PathActor(screen, ActorSquirrel))
+	}
+
 }
 
 func (game *Game) AddSeeds() int {
@@ -224,21 +355,13 @@ func (game *Game) AddSeeds() int {
 	for i := 1; i <= SeedCreationMax; i++ {
 		if rand.Float64() <= SeedCreationChance {
 			var x, y int
-			overlaps := false
-			// Prevent seed from spawning on occupied point
+			blockedPoints := game.GetNonActorBlockedPoints()
 			for {
 				x = rand.Intn(game.border.x2-1) + game.border.x1
 				y = rand.Intn(game.border.y2-1) + game.border.y1
-				for _, tree := range game.trees {
-					if x == tree.x && y == tree.y {
-						overlaps = true
-						break
-					}
-				}
-				if !overlaps {
+				if !game.PointIsBlocked(Coordinate{x, y}, blockedPoints) {
 					break
 				}
-
 			}
 			game.trees[maxIndex+i] = &Tree{x, y, TreeStateSeed}
 			seedCount++
@@ -264,17 +387,24 @@ func (game *Game) GrowTrees() int {
 }
 
 func (game *Game) PopulateTrees(screen tcell.Screen) int {
-	// states := []int{
-	// 	TreeStateSeed,
-	// 	TreeStateSapling,
-	// 	TreeStateAdult,
-	// }
+	states := []int{
+		TreeStateSeed,
+		TreeStateSapling,
+		TreeStateAdult,
+	}
 	maxTreeCount := rand.Intn(30) + 10
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
-		state := TreeStateSeed //states[rand.Intn(3)]
-		x := rand.Intn(game.border.x2-1) + game.border.x1
-		y := rand.Intn(game.border.y2-1) + game.border.y1
+		state := states[rand.Intn(3)]
+		var x, y int
+		blockedPoints := game.GetNonActorBlockedPoints()
+		for {
+			x = rand.Intn(game.border.x2-1) + game.border.x1
+			y = rand.Intn(game.border.y2-1) + game.border.y1
+			if !game.PointIsBlocked(Coordinate{x, y}, blockedPoints) {
+				break
+			}
+		}
 		game.trees[i] = &Tree{x, y, state}
 		treeCount++
 	}

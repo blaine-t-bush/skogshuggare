@@ -32,8 +32,8 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player:   Actor{5, 5},
-		squirrel: Actor{10, 10},
+		player:   Actor{x: 5, y: 5},
+		squirrel: Actor{x: 10, y: 10, destinationX: 20, destinationY: 20},
 		border:   Border{0, w - 1, 0, h - 1, 1},
 		trees:    map[int]*Tree{},
 		exit:     false,
@@ -103,7 +103,7 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
-	game.MoveActor(screen, ActorSquirrel, 1, DirRandom)
-	game.AddSeeds()
+	game.UpdateSquirrel(screen)
+	//game.AddSeeds()
 	game.GrowTrees()
 }
