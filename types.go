@@ -6,7 +6,7 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-type Player struct {
+type Actor struct {
 	x int // Player x-coordinate
 	y int // Player y-coordinate
 }
@@ -28,12 +28,19 @@ type Tree struct {
 const (
 	// Game parameters
 	TickRate = 30 // Milliseconds between ticks
+	// Actors
+	ActorPlayer   = 1
+	ActorSquirrel = 2
+	// Characters
+	CharacterPlayer   = '@'
+	CharacterSquirrel = '~'
 	// Directions
-	DirUp    = 0
-	DirRight = 1
-	DirDown  = 2
-	DirLeft  = 3
-	DirOmni  = 4
+	DirUp     = 0
+	DirRight  = 1
+	DirDown   = 2
+	DirLeft   = 3
+	DirOmni   = 4
+	DirRandom = 5
 	// Living tree states
 	TreeStateSeed    = 0
 	TreeStateSapling = 1
@@ -51,10 +58,11 @@ const (
 )
 
 type Game struct {
-	player Player
-	border Border
-	trees  map[int]*Tree
-	exit   bool
+	player   Actor
+	squirrel Actor
+	border   Border
+	trees    map[int]*Tree
+	exit     bool
 }
 
 // NOTE
@@ -97,65 +105,108 @@ func (game *Game) DrawTrees(screen tcell.Screen) {
 	}
 }
 
-func (game *Game) ClearPlayer(screen tcell.Screen) {
-	screen.SetContent(game.player.x, game.player.y, ' ', nil, tcell.StyleDefault)
+func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
+	var actor Actor
+	switch actorType {
+	case ActorPlayer:
+		actor = game.player
+	case ActorSquirrel:
+		actor = game.squirrel
+	}
+	screen.SetContent(actor.x, actor.y, ' ', nil, tcell.StyleDefault)
 }
 
-func (game *Game) DrawPlayer(screen tcell.Screen) {
-	screen.SetContent(game.player.x, game.player.y, '@', nil, tcell.StyleDefault)
+func (game *Game) DrawActor(screen tcell.Screen, actorType int) {
+	var actor Actor
+	var character rune
+	switch actorType {
+	case ActorPlayer:
+		actor = game.player
+		character = CharacterPlayer
+	case ActorSquirrel:
+		actor = game.squirrel
+		character = CharacterSquirrel
+	}
+	screen.SetContent(actor.x, actor.y, character, nil, tcell.StyleDefault)
 }
 
 func (game *Game) Draw(screen tcell.Screen) {
 	screen.Clear()
 	game.DrawBorder(screen)
-	game.DrawPlayer(screen)
+	game.DrawActor(screen, ActorPlayer)
+	game.DrawActor(screen, ActorSquirrel)
 	game.DrawTrees(screen)
 	screen.Show()
 }
 
-func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
-	game.ClearPlayer(screen)
+func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int) {
+	var actor Actor
+	switch actorType {
+	case ActorPlayer:
+		actor = game.player
+	case ActorSquirrel:
+		actor = game.squirrel
+	}
+
+	game.ClearActor(screen, actorType)
 
 	// Determine (potential) new location.
-	pMoved := game.player
+	if dir == DirRandom {
+		randInt := rand.Intn(4)
+		switch randInt {
+		case 0:
+			dir = DirUp
+		case 1:
+			dir = DirRight
+		case 2:
+			dir = DirDown
+		case 3:
+			dir = DirLeft
+		}
+	}
+	aMoved := actor
 	if len != 0 {
 		switch dir {
 		case DirUp:
-			pMoved.y = game.player.y - len
+			aMoved.y = actor.y - len
 		case DirRight:
-			pMoved.x = game.player.x + len
+			aMoved.x = actor.x + len
 		case DirDown:
-			pMoved.y = game.player.y + len
+			aMoved.y = actor.y + len
 		case DirLeft:
-			pMoved.x = game.player.x - len
+			aMoved.x = actor.x - len
 		}
 	}
 
 	// Prevent update if player would collide with tree trunks, but not with
 	// tree canopies.
 	for _, tree := range game.trees {
-		if tree.state != TreeStateRemoved && pMoved.y == tree.y && pMoved.x == tree.x {
-			pMoved.x = game.player.x
-			pMoved.y = game.player.y
+		if tree.state != TreeStateRemoved && aMoved.y == tree.y && aMoved.x == tree.x {
+			aMoved.x = actor.x
+			aMoved.y = actor.y
 		}
 	}
 
 	// Prevent update if new location is past left or right boundaries.
-	if pMoved.x <= game.border.x1 {
-		pMoved.x = game.border.x1 + game.border.t
-	} else if pMoved.x >= game.border.x2 {
-		pMoved.x = game.border.x2 - game.border.t
+	if aMoved.x <= game.border.x1 {
+		aMoved.x = game.border.x1 + game.border.t
+	} else if aMoved.x >= game.border.x2 {
+		aMoved.x = game.border.x2 - game.border.t
 	}
 
 	// Prevent update if new location is past top or bottom boundaries.
-	if pMoved.y <= game.border.y1 {
-		pMoved.y = game.border.y1 + game.border.t
-	} else if pMoved.y >= game.border.y2 {
-		pMoved.y = game.border.y2 - game.border.t
+	if aMoved.y <= game.border.y1 {
+		aMoved.y = game.border.y1 + game.border.t
+	} else if aMoved.y >= game.border.y2 {
+		aMoved.y = game.border.y2 - game.border.t
 	}
 
-	game.player = pMoved
-	game.Draw(screen)
+	switch actorType {
+	case ActorPlayer:
+		game.player = aMoved
+	case ActorSquirrel:
+		game.squirrel = aMoved
+	}
 }
 
 func (game *Game) AddSeeds() int {

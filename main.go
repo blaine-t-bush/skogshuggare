@@ -32,10 +32,11 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player: Player{5, 5},
-		border: Border{0, w - 1, 0, h - 1, 1},
-		trees:  map[int]*Tree{},
-		exit:   false,
+		player:   Actor{5, 5},
+		squirrel: Actor{10, 10},
+		border:   Border{0, w - 1, 0, h - 1, 1},
+		trees:    map[int]*Tree{},
+		exit:     false,
 	}
 
 	// Wait for Loop() goroutine to finish before moving on.
@@ -78,13 +79,13 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.exit = true
 			return
 		case tcell.KeyUp:
-			game.MovePlayer(screen, 1, DirUp)
+			game.MoveActor(screen, ActorPlayer, 1, DirUp)
 		case tcell.KeyRight:
-			game.MovePlayer(screen, 1, DirRight)
+			game.MoveActor(screen, ActorPlayer, 1, DirRight)
 		case tcell.KeyDown:
-			game.MovePlayer(screen, 1, DirDown)
+			game.MoveActor(screen, ActorPlayer, 1, DirDown)
 		case tcell.KeyLeft:
-			game.MovePlayer(screen, 1, DirLeft)
+			game.MoveActor(screen, ActorPlayer, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune(' '):
@@ -102,6 +103,7 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
+	game.MoveActor(screen, ActorSquirrel, 1, DirRandom)
 	game.AddSeeds()
 	game.GrowTrees()
 }
