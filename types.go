@@ -170,7 +170,7 @@ func (game *Game) AddSeeds() int { // FIXME determine why seeds sometimes disapp
 	}
 
 	// Possibly create new seeds
-	for i := 0; i < SeedCreationMax; i++ {
+	for i := 1; i <= SeedCreationMax; i++ {
 		if rand.Float64() <= SeedCreationChance {
 			x := rand.Intn(game.border.x2-1) + game.border.x1
 			y := rand.Intn(game.border.y2-1) + game.border.y1
