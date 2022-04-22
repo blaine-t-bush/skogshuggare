@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,12 +35,15 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player:   Actor{x: 5, y: 5},
-		squirrel: Actor{x: 10, y: 10, destinationX: 20, destinationY: 20},
+		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100},
+		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100},
 		border:   Border{0, w - 1, 0, h - 1, 1},
-		trees:    map[int]*Tree{},
+		world:    readMap("kartor/skog.karta"),
 		exit:     false,
 	}
+
+	// Randomly seed map with trees in various states.
+	game.PopulateTrees(screen)
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
@@ -47,15 +53,43 @@ func main() {
 	screen.Fini()
 }
 
+func readMap(fileName string) World {
+	filebuffer, err := ioutil.ReadFile(fileName)
+	world_content := make(map[Coordinate]interface{})
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	filedata := string(filebuffer)
+	data := bufio.NewScanner(strings.NewReader(filedata))
+	data.Split(bufio.ScanRunes)
+	width := 0
+	height := 0
+	xmax := false
+	x := 0
+	for data.Scan() {
+		if data.Text()[0] == '\n' {
+			height++
+			x = 0
+			xmax = true
+			continue
+		} else if data.Text()[0] == '#' {
+			world_content[Coordinate{x, height}] = Object{'#', true}
+		}
+		if !xmax {
+			width++
+		}
+		x++
+	}
+
+	return World{width, height, world_content}
+}
+
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 	// Wait for this goroutine to finish before resuming main().
 	defer wg.Done()
-
-	// Randomly seed map with trees in various states.
-	game.PopulateTrees(screen)
-
-	// Perform first draw.
-	game.Draw(screen)
 
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
@@ -71,6 +105,8 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 }
 
 func (game *Game) Update(screen tcell.Screen) {
+	// Listen for keyboard events for player actions,
+	// or terminal resizing events to re-draw the screen.
 	ev := screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
@@ -103,7 +139,8 @@ func (game *Game) Update(screen tcell.Screen) {
 	case *tcell.EventResize:
 		screen.Sync()
 	}
-	game.UpdateSquirrel(screen)
-	//game.AddSeeds()
+
+	// Update the non-player parts of game state.
+	game.MoveActor(screen, ActorSquirrel, 1, DirRandom)
 	game.GrowTrees()
 }
