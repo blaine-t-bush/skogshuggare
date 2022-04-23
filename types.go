@@ -49,4 +49,5 @@ type Menu struct {
 	width    int
 	height   int
 	position Coordinate
+	messages []string
 }

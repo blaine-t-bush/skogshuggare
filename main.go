@@ -39,7 +39,7 @@ func main() {
 		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
 		border:   Border{0, w - 1, 0, h - 1, 1},
 		world:    readMap("kartor/skog.karta"),
-		menu:     Menu{15, 5, Coordinate{0, 0}},
+		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
 		exit:     false,
 	}
 

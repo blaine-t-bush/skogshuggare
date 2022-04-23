@@ -117,6 +117,7 @@ func (game *Game) DrawMenu(screen tcell.Screen) {
 		screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
 		scoreIdx++
 	}
+	game.PrintToMenu(screen)
 }
 
 func (game *Game) DrawMenuBorder(screen tcell.Screen) {
@@ -146,6 +147,37 @@ func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
 		actor = game.squirrel
 	}
 	screen.SetContent(actor.position.x, actor.position.y, ' ', nil, tcell.StyleDefault)
+}
+
+func (game *Game) PrintToMenu(screen tcell.Screen) {
+	maxLen := game.menu.width
+	maxHeight := game.menu.height
+
+	currX := 1
+	currY := 2
+	for _, message := range game.menu.messages {
+		for c := 0; c < len(message); c++ {
+			r := rune(message[c])
+			if c%maxLen == 0 {
+				currX = 1
+				currY++
+			}
+			if currY >= maxHeight {
+				break
+			}
+			screen.SetContent(currX, currY, r, nil, tcell.StyleDefault)
+			currX++
+		}
+	}
+
+}
+
+func (game *Game) AppentToMenuMessages(text string) {
+	if len(game.menu.messages) <= 3 {
+		game.menu.messages = append(game.menu.messages, text)
+	} else {
+		game.menu.messages = append(game.menu.messages[:0], game.menu.messages[1:]...)
+	}
 }
 
 func IsBorder(width int, height int, coord Coordinate) (response int, ok bool) {
