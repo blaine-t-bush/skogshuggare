@@ -39,9 +39,8 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 	}
 
 	// Prevent actor from moving through an collidable object.
-	obj, exists := game.world.content[Coordinate{newX, newY}]
-	if exists {
-		switch obj.(type) {
+	if content, exists := game.world.content[Coordinate{newX, newY}]; exists {
+		switch content.(type) {
 		case Object, *Tree:
 			break // Collide; do not change position.
 		default:

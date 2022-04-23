@@ -19,9 +19,9 @@ const (
 // Returns true if coordinate contains a collidable non-actor.
 func (game *Game) IsBlocked(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
-		switch object := content.(type) {
+		switch content := content.(type) {
 		case Object:
-			if object.collidable {
+			if content.collidable {
 				return true
 			}
 		case *Tree:

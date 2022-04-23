@@ -37,15 +37,14 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 func (game *Game) GrowTrees() int {
 	growthCount := 0
 
-	for _, object := range game.world.content {
-		switch object.(type) {
+	for _, content := range game.world.content {
+		switch content := content.(type) {
 		case *Tree:
-			tree := object.(*Tree)
-			if tree.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
-				tree.state = TreeStateSapling
+			if content.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
+				content.state = TreeStateSapling
 				growthCount++
-			} else if tree.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
-				tree.state = TreeStateAdult
+			} else if content.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
+				content.state = TreeStateAdult
 				growthCount++
 			}
 		}
@@ -60,24 +59,23 @@ func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate) bool {
 	// stump ------> removed
 	// sapling ----> stumpling
 	// stumpling --> removed
-	object, exists := game.world.content[position]
+	content, exists := game.world.content[position]
 
 	if !exists {
 		return false
 	}
 
-	switch object.(type) {
+	switch content := content.(type) {
 	case *Tree:
-		tree := object.(*Tree)
-		switch tree.state {
+		switch content.state {
 		case TreeStateAdult:
-			tree.state = TreeStateTrunk
+			content.state = TreeStateTrunk
 			return true
 		case TreeStateTrunk:
-			tree.state = TreeStateStump
+			content.state = TreeStateStump
 			return true
 		case TreeStateSapling:
-			tree.state = TreeStateStumpling
+			content.state = TreeStateStumpling
 			return true
 		case TreeStateStump, TreeStateStumpling:
 			delete(game.world.content, position)
@@ -93,36 +91,35 @@ func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate) bool {
 func (game *Game) Chop(screen tcell.Screen, dir int) int {
 	choppedCount := 0
 outside:
-	for _, object := range game.world.content {
-		switch object.(type) {
+	for _, content := range game.world.content {
+		switch content := content.(type) {
 		case *Tree:
-			tree := object.(*Tree)
-			isAbove := tree.position.y == game.player.position.y-1 && tree.position.x == game.player.position.x
-			isRight := tree.position.y == game.player.position.y && tree.position.x == game.player.position.x+1
-			isBelow := tree.position.y == game.player.position.y+1 && tree.position.x == game.player.position.x
-			isLeft := tree.position.y == game.player.position.y && tree.position.x == game.player.position.x-1
+			isAbove := content.position.y == game.player.position.y-1 && content.position.x == game.player.position.x
+			isRight := content.position.y == game.player.position.y && content.position.x == game.player.position.x+1
+			isBelow := content.position.y == game.player.position.y+1 && content.position.x == game.player.position.x
+			isLeft := content.position.y == game.player.position.y && content.position.x == game.player.position.x-1
 			switch dir {
 			case DirOmni:
-				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, tree.position) {
+				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, content.position) {
 					choppedCount++
 				}
 			case DirUp:
-				if isAbove && game.DecrementTree(screen, tree.position) {
+				if isAbove && game.DecrementTree(screen, content.position) {
 					choppedCount++
 					break outside
 				}
 			case DirRight:
-				if isRight && game.DecrementTree(screen, tree.position) {
+				if isRight && game.DecrementTree(screen, content.position) {
 					choppedCount++
 					break outside
 				}
 			case DirDown:
-				if isBelow && game.DecrementTree(screen, tree.position) {
+				if isBelow && game.DecrementTree(screen, content.position) {
 					choppedCount++
 					break outside
 				}
 			case DirLeft:
-				if isLeft && game.DecrementTree(screen, tree.position) {
+				if isLeft && game.DecrementTree(screen, content.position) {
 					choppedCount++
 					break outside
 				}

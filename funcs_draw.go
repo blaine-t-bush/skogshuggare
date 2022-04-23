@@ -35,32 +35,30 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 
 	for x := game.player.position.x - game.player.visionRadius; x <= game.player.position.x+game.player.visionRadius; x++ {
 		for y := game.player.position.y - game.player.visionRadius; y <= game.player.position.y+game.player.visionRadius; y++ {
-			obj, found := game.world.content[Coordinate{x, y}]
-			if found {
+			if content, found := game.world.content[Coordinate{x, y}]; found {
 				w, h := screen.Size()
-				objViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-				objViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
-				switch obj.(type) {
+				contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
+				contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(objViewportX, objViewportY, '#', nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, content.char, nil, tcell.StyleDefault)
 				case *Tree:
-					tree := obj.(*Tree)
 					// Draw tree
-					switch tree.state {
+					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(objViewportX, objViewportY, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '▄', nil, tcell.StyleDefault)
 					case TreeStateTrunk:
-						screen.SetContent(objViewportX, objViewportY, '█', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, tcell.StyleDefault)
 					case TreeStateStumpling:
-						screen.SetContent(objViewportX, objViewportY, '╻', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '╻', nil, tcell.StyleDefault)
 					case TreeStateSapling:
-						screen.SetContent(objViewportX, objViewportY, '┃', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '┃', nil, tcell.StyleDefault)
 					case TreeStateSeed:
-						screen.SetContent(objViewportX, objViewportY, '.', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '.', nil, tcell.StyleDefault)
 					case TreeStateAdult:
-						screen.SetContent(objViewportX, objViewportY, '█', nil, tcell.StyleDefault)
-						screen.SetContent(objViewportX, objViewportY-1, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY-1, '▄', nil, tcell.StyleDefault)
 					}
 				}
 			}
