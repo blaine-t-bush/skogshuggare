@@ -8,6 +8,7 @@ type Coordinate struct {
 type Actor struct {
 	position     Coordinate
 	visionRadius int
+	score        int
 }
 
 type Border struct {
@@ -40,5 +41,12 @@ type Game struct {
 	squirrel Actor
 	border   Border
 	world    World
+	menu     Menu
 	exit     bool
+}
+
+type Menu struct {
+	width    int
+	height   int
+	position Coordinate
 }

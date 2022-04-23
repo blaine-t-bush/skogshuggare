@@ -35,10 +35,11 @@ func main() {
 	// Initialize game state.
 	w, h := screen.Size()
 	game := Game{
-		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100},
-		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100},
+		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100, score: 0},
+		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
 		border:   Border{0, w - 1, 0, h - 1, 1},
 		world:    readMap("kartor/skog.karta"),
+		menu:     Menu{15, 5, Coordinate{0, 0}},
 		exit:     false,
 	}
 

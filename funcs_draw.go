@@ -1,10 +1,15 @@
 package main
 
-import "github.com/gdamore/tcell"
+import (
+	"strconv"
+
+	"github.com/gdamore/tcell"
+)
 
 func (game *Game) Draw(screen tcell.Screen) {
 	screen.Clear()
 	game.DrawViewport(screen)
+	game.DrawMenu(screen)
 	screen.Show()
 }
 
@@ -100,6 +105,36 @@ func (game *Game) DrawSquirrel(screen tcell.Screen) {
 	w, h := screen.Size()
 	screen.SetContent(w/2+game.squirrel.position.x-game.player.position.x, h/2+game.squirrel.position.y-game.player.position.y, CharacterSquirrel, nil, tcell.StyleDefault)
 
+}
+
+func (game *Game) DrawMenu(screen tcell.Screen) {
+	game.DrawMenuBorder(screen)
+	// Draw score: 0
+	//      12345678
+	scoreString := "Score: " + strconv.Itoa(game.player.score)
+	scoreIdx := 0
+	for i := 1; i < len(scoreString)+1; i++ {
+		screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
+		scoreIdx++
+	}
+}
+
+func (game *Game) DrawMenuBorder(screen tcell.Screen) {
+	for c := 1; c < game.menu.width; c++ { // Draw top and bottom borders
+		screen.SetContent(c, 0, tcell.RuneHLine, nil, tcell.StyleDefault)
+		screen.SetContent(c, game.menu.height, tcell.RuneHLine, nil, tcell.StyleDefault)
+	}
+
+	for r := 1; r <= game.menu.height-1; r++ { // Add left and right borders
+		screen.SetContent(0, r, tcell.RuneVLine, nil, tcell.StyleDefault)
+		screen.SetContent(game.menu.width, r, tcell.RuneVLine, nil, tcell.StyleDefault)
+	}
+
+	// Add corners
+	screen.SetContent(0, 0, tcell.RuneULCorner, nil, tcell.StyleDefault)
+	screen.SetContent(game.menu.width, 0, tcell.RuneURCorner, nil, tcell.StyleDefault)
+	screen.SetContent(0, game.menu.height, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+	screen.SetContent(game.menu.width, game.menu.height, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 }
 
 func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
