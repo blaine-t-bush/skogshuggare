@@ -62,7 +62,7 @@ const (
 )
 
 var (
-	symbols = map[int]Symbol{
+	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
 		KeyPlayer:        {char: '@', style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
 		KeySquirrel:      {char: 's', style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
 		KeyWall:          {char: '#', style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
