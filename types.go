@@ -7,15 +7,8 @@ type Coordinate struct {
 
 type Actor struct {
 	position     Coordinate
+	destination  Coordinate
 	visionRadius int
-}
-
-type Border struct {
-	x1 int // Left border boundary x-coordinate
-	x2 int // Right border boundary x-coordinate
-	y1 int // Top border boundary y-coordinate
-	y2 int // Bottom border boundary y-coordinate
-	t  int // Border thickness in characters
 }
 
 type Tree struct {
@@ -37,7 +30,6 @@ type World struct {
 type Game struct {
 	player   Actor
 	squirrel Actor
-	border   Border
 	world    World
 	exit     bool
 }

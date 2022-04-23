@@ -6,24 +6,15 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-// func (game *Game) PlantSeed(x int, y int) bool {
-// 	// Get max index of current trees map
-// 	var maxIndex int
-// 	for index := range game.trees {
-// 		if maxIndex < index {
-// 			maxIndex = index
-// 		}
-// 	}
-
-// 	// Check if seed overlaps with existing trees
-// 	// If it does not overlap, plant it
-// 	if !game.PointIsBlocked(Coordinate{x, y}, game.GetNonActorBlockedPoints()) {
-// 		game.trees[maxIndex+1] = &Tree{x, y, TreeStateSeed}
-// 		return true
-// 	} else {
-// 		return false
-// 	}
-// }
+func (game *Game) PlantSeed(coordinate Coordinate) bool {
+	// Get max index of current trees map
+	if !game.IsBlocked(coordinate) {
+		game.world.content[coordinate] = &Tree{coordinate, TreeStateSeed}
+		return true
+	} else {
+		return false
+	}
+}
 
 func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	states := []int{
@@ -35,19 +26,8 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
 		state := states[rand.Intn(len(states))]
-		x := rand.Intn(game.world.width)
-		y := rand.Intn(game.world.height)
-		for {
-			_, exists := game.world.content[Coordinate{x, y}]
-			if !exists {
-				game.world.content[Coordinate{x, y}] = &Tree{Coordinate{x, y}, state}
-				break
-			} else {
-				x = rand.Intn(game.world.width)
-				y = rand.Intn(game.world.height)
-			}
-
-		}
+		coordinate := game.GetRandomAvailableCoordinate()
+		game.world.content[coordinate] = &Tree{coordinate, state}
 		treeCount++
 	}
 
