@@ -15,10 +15,11 @@ func (game *Game) Draw(screen tcell.Screen) {
 }
 
 // Only draw things within the player view range
+// Things are drawn in reverse order of importance: player is drawn last so they will be on top
+// The upside is that the player won't be hidden by grass or bridges.
+// The downside is that the player won't be hidden by tree canopies.
+// FIXME maybe there is a way to address this.
 func (game *Game) DrawViewport(screen tcell.Screen) {
-	game.DrawPlayer(screen)
-	game.DrawSquirrel(screen)
-
 	/*
 		view_radius = 5
 		y_up = 5
@@ -72,6 +73,9 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 			}
 		}
 	}
+
+	game.DrawSquirrel(screen)
+	game.DrawPlayer(screen)
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
