@@ -41,7 +41,8 @@ func main() {
 	screen.Clear()
 
 	// Randomly seed map with trees in various states.
-	// game.PopulateTrees(screen)
+	game.PopulateTrees(screen)
+	game.PopulateGrass(screen)
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup

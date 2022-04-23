@@ -6,6 +6,7 @@ var (
 	styleTreeWoodNormal = tcell.StyleDefault.Foreground(tcell.NewRGBColor(153, 77, 0))
 	styleTreeWoodLight  = tcell.StyleDefault.Foreground(tcell.NewRGBColor(230, 115, 0))
 	styleTreeLeaves     = tcell.StyleDefault.Foreground(tcell.NewRGBColor(20, 200, 20))
+	styleGrass          = tcell.StyleDefault.Foreground(tcell.NewRGBColor(10, 240, 10))
 )
 
 func (game *Game) Draw(screen tcell.Screen) {
@@ -48,7 +49,11 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(contentViewportX, contentViewportY, content.char, nil, tcell.StyleDefault)
+					if content.collidable {
+						screen.SetContent(contentViewportX, contentViewportY, content.char, nil, tcell.StyleDefault)
+					} else {
+						screen.SetContent(contentViewportX, contentViewportY, content.char, nil, styleGrass)
+					}
 				case *Tree:
 					// Draw tree
 					switch content.state {

@@ -22,7 +22,7 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 		TreeStateSapling,
 		TreeStateAdult,
 	}
-	maxTreeCount := rand.Intn(30) + 10
+	maxTreeCount := rand.Intn(5) + 3
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
 		state := states[rand.Intn(len(states))]
@@ -32,6 +32,22 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	}
 
 	return treeCount
+}
+
+func (game *Game) PopulateGrass(screen tcell.Screen) int {
+	maxGrassCount := rand.Intn(10) + 6
+	grassCount := 0
+	for i := 0; i < maxGrassCount; i++ {
+		coordinate := game.GetRandomAvailableCoordinate()
+		if rand.Intn(2) == 0 {
+			game.world.content[coordinate] = Object{'"', false}
+		} else {
+			game.world.content[coordinate] = Object{'\'', false}
+		}
+		grassCount++
+	}
+
+	return grassCount
 }
 
 func (game *Game) GrowTrees() int {
