@@ -48,14 +48,13 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	for x := game.player.position.x - game.player.visionRadius; x <= game.player.position.x+game.player.visionRadius; x++ {
 		for y := game.player.position.y - game.player.visionRadius; y <= game.player.position.y+game.player.visionRadius; y++ {
 			coord := Coordinate{x, y}
-      w, h := screen.Size()
-      
-			// Get the viewport coordinates
-      contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-      contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+			w, h := screen.Size()
 
-			border, isBorder := game.world.borders[coord]
-			if isBorder {
+			// Get the viewport coordinates
+			contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
+			contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+
+			if border, isBorder := game.world.borders[coord]; isBorder {
 				switch border {
 				case TopBorder, BottomBorder:
 					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneHLine, nil, tcell.StyleDefault)
@@ -182,7 +181,7 @@ func (game *Game) PrintToMenu(screen tcell.Screen) {
 
 }
 
-func (game *Game) AppentToMenuMessages(text string) {
+func (game *Game) AppendToMenuMessages(text string) {
 	if len(game.menu.messages) <= 3 {
 		game.menu.messages = append(game.menu.messages, text)
 	} else {
@@ -204,29 +203,27 @@ func IsBorder(width int, height int, coord Coordinate) (response int, ok bool) {
 		left border (x = 0, y = 1..height - 2)
 	*/
 	isTopBorder := (coord.x >= 0 && coord.x <= width-1) && coord.y == 0
-	isRightBorder := (coord.x == width-1) && (coord.y >= 1 && coord.y <= height-1)
-	isBottomBorder := (coord.x >= 0 && coord.x <= width-1) && coord.y == height
-	isLeftBorder := (coord.x == 0) && (coord.y >= 1 && coord.y <= height-1)
+	isRightBorder := coord.x == width-1 && (coord.y >= 0 && coord.y <= height-1)
+	isBottomBorder := (coord.x >= 0 && coord.x <= width-1) && coord.y == height-1
+	isLeftBorder := coord.x == 0 && (coord.y >= 0 && coord.y <= height-1)
 	isTopLeftCorner := coord.x == 0 && coord.y == 0
 	isTopRightCorner := coord.x == width-1 && coord.y == 0
-	isBottomRightCorner := coord.x == width-1 && coord.y == height
-	isBottomLeftCorner := coord.x == 0 && coord.y == height
+	isBottomRightCorner := coord.x == width-1 && coord.y == height-1
+	isBottomLeftCorner := coord.x == 0 && coord.y == height-1
 
-	if isTopBorder {
-		if isTopLeftCorner {
-			return TopLeftCorner, true
-		} else if isTopRightCorner {
-			return TopRightCorner, true
-		}
+	if isTopLeftCorner {
+		return TopLeftCorner, true
+	} else if isTopRightCorner {
+		return TopRightCorner, true
+	} else if isBottomRightCorner {
+		return BottomRightCorner, true
+	} else if isBottomLeftCorner {
+		return BottomLeftCorner, true
+	} else if isTopBorder {
 		return TopBorder, true
 	} else if isRightBorder {
 		return RightBorder, true
 	} else if isBottomBorder {
-		if isBottomRightCorner {
-			return BottomRightCorner, true
-		} else if isBottomLeftCorner {
-			return BottomLeftCorner, true
-		}
 		return BottomBorder, true
 	} else if isLeftBorder {
 		return LeftBorder, true
