@@ -157,7 +157,6 @@ func (game *Game) Update(screen tcell.Screen) {
 			nextDirection = game.FindNextDirection(game.squirrel.position, game.squirrel.destination)
 			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
 				game.squirrel.destination = game.GetRandomAvailableCoordinate()
-				nextDirection = game.FindNextDirection(game.squirrel.position, game.squirrel.destination)
 			} else {
 				break
 			}
