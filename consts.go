@@ -6,10 +6,11 @@ const (
 	// Game parameters
 	TickRate = 30 // Milliseconds between ticks
 	// Map characters
-	MapPlayer   = 'p'
-	MapSquirrel = 's'
-	MapWater    = 'w'
-	MapWall     = '#'
+	MapPlayer     = 'p'
+	MapSquirrel   = 's'
+	MapWaterLight = 'w'
+	MapWaterHeavy = 'W'
+	MapWall       = '#'
 	// Growth chances (per game tick)
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
@@ -30,7 +31,8 @@ const (
 	KeyTreeStumpling
 	KeyGrassLight
 	KeyGrassHeavy
-	KeyWater
+	KeyWaterLight
+	KeyWaterHeavy
 	// Directions
 	DirUp
 	DirRight
@@ -72,7 +74,8 @@ var (
 		KeyTreeStumpling: {char: '╻', style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
 		KeyGrassLight:    {char: '\'', style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		KeyGrassHeavy:    {char: '"', style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
-		KeyWater:         {char: '~', style: tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue)},
+		KeyWaterLight:    {char: ' ', style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
+		KeyWaterHeavy:    {char: '~', style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
 	}
 )
 

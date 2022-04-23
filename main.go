@@ -92,8 +92,10 @@ func readMap(fileName string) (World, Coordinate, Coordinate) {
 				squirrelPosition = Coordinate{i, height}
 			case MapWall:
 				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false}
-			case MapWater:
-				worldContent[Coordinate{i, height}] = Object{KeyWater, true, false}
+			case MapWaterLight:
+				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, true, false}
+			case MapWaterHeavy:
+				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, true, false}
 			}
 		}
 
