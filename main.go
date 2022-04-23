@@ -14,11 +14,12 @@ import (
 )
 
 func main() {
-	// Initialize game state.
+	// Read map to initialize game state.
+	worldContent, playerPosition, squirrelPosition := readMap("kartor/ö.karta")
 	game := Game{
-		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100, score: 0},
-		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
-		world:    readMap("kartor/flod.karta"),
+		player:   Actor{position: playerPosition, visionRadius: 100, score: 0},
+		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
+		world:    worldContent,
 		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
 		exit:     false,
 	}
@@ -53,7 +54,7 @@ func main() {
 	screen.Fini()
 }
 
-func readMap(fileName string) World {
+func readMap(fileName string) (World, Coordinate, Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
 	worldContent := make(map[Coordinate]interface{})
 
@@ -67,6 +68,7 @@ func readMap(fileName string) World {
 	data.Split(bufio.ScanLines)
 	width := 0
 	height := 0
+	var playerPosition, squirrelPosition Coordinate
 	for data.Scan() {
 		// Check if width needs to be updated. It's determined by the longest line.
 		lineWidth := len(data.Text())
@@ -77,12 +79,14 @@ func readMap(fileName string) World {
 		// Update the worldContent map according to special characters.
 		for i := 0; i < lineWidth; i++ {
 			switch data.Text()[i] {
-			case '#': // wall
-				worldContent[Coordinate{i, height}] = Object{'#', true, false, 255, 255, 255}
-			case '~': // water
-				worldContent[Coordinate{i, height}] = Object{'~', true, false, 10, 10, 200}
-			case '=': // bridge
-				worldContent[Coordinate{i, height}] = Object{'=', false, false, 150, 70, 0}
+			case RunePlayer:
+				playerPosition = Coordinate{i, height}
+			case RuneSquirrel:
+				squirrelPosition = Coordinate{i, height}
+			case RuneWall:
+				worldContent[Coordinate{i, height}] = Object{'#', true, false}
+			case RuneWater:
+				worldContent[Coordinate{i, height}] = Object{'~', true, false}
 			}
 		}
 
@@ -98,7 +102,7 @@ func readMap(fileName string) World {
 		}
 	}
 
-	return World{width, height, _borders, worldContent}
+	return World{width, height, _borders, worldContent}, playerPosition, squirrelPosition
 }
 
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {

@@ -19,11 +19,8 @@ type Tree struct {
 
 type Object struct {
 	char       rune
-	collidable bool  // Are actors blocked
-	plantable  bool  // Can seeds be planted here
-	r          int32 // Rgb color value
-	g          int32 // rGb color value
-	b          int32 // rgB color value
+	collidable bool // Are actors blocked
+	plantable  bool // Can seeds be planted here
 }
 
 type World struct {

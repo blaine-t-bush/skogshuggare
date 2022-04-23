@@ -1,14 +1,26 @@
 package main
 
+import "github.com/gdamore/tcell"
+
 const (
 	// Game parameters
 	TickRate = 30 // Milliseconds between ticks
 	// Actors
 	ActorPlayer   = 1
 	ActorSquirrel = 2
-	// Characters
-	CharacterPlayer   = '@'
-	CharacterSquirrel = '~'
+	// Runes
+	RunePlayer        = '@'
+	RuneSquirrel      = 's'
+	RuneWall          = '#'
+	RuneTreeSeed      = '.'
+	RuneTreeSapling   = '┃'
+	RuneTreeTrunk     = '█'
+	RuneTreeLeaves    = '▓'
+	RuneTreeStump     = '▄'
+	RuneTreeStumpling = '╻'
+	RuneGrassLight    = '\''
+	RuneGrassHeavy    = '"'
+	RuneWater         = '~'
 	// Directions
 	DirUp     = 0
 	DirRight  = 1
@@ -40,6 +52,37 @@ const (
 	TopRightCorner    = 105
 	BottomRightCorner = 106
 	BottomLeftCorner  = 107
+)
+
+var (
+	symbolColors = map[rune]tcell.Color{
+		RunePlayer:        tcell.ColorIndianRed,
+		RuneSquirrel:      tcell.ColorRosyBrown,
+		RuneWall:          tcell.ColorWhite,
+		RuneTreeSeed:      tcell.ColorKhaki,
+		RuneTreeSapling:   tcell.ColorSaddleBrown,
+		RuneTreeTrunk:     tcell.ColorSaddleBrown,
+		RuneTreeLeaves:    tcell.ColorForestGreen,
+		RuneTreeStump:     tcell.ColorSaddleBrown,
+		RuneTreeStumpling: tcell.ColorSaddleBrown,
+		RuneGrassLight:    tcell.ColorGreenYellow,
+		RuneGrassHeavy:    tcell.ColorGreenYellow,
+		RuneWater:         tcell.ColorCornflowerBlue,
+	}
+	symbolStyles = map[rune]tcell.Style{
+		RunePlayer:        tcell.StyleDefault.Foreground(symbolColors[RunePlayer]),
+		RuneSquirrel:      tcell.StyleDefault.Foreground(symbolColors[RuneSquirrel]),
+		RuneWall:          tcell.StyleDefault.Foreground(symbolColors[RuneWall]),
+		RuneTreeSeed:      tcell.StyleDefault.Foreground(symbolColors[RuneTreeSeed]),
+		RuneTreeSapling:   tcell.StyleDefault.Foreground(symbolColors[RuneTreeSapling]),
+		RuneTreeTrunk:     tcell.StyleDefault.Foreground(symbolColors[RuneTreeTrunk]),
+		RuneTreeLeaves:    tcell.StyleDefault.Foreground(symbolColors[RuneTreeLeaves]),
+		RuneTreeStump:     tcell.StyleDefault.Foreground(symbolColors[RuneTreeStump]),
+		RuneTreeStumpling: tcell.StyleDefault.Foreground(symbolColors[RuneTreeStumpling]),
+		RuneGrassLight:    tcell.StyleDefault.Foreground(symbolColors[RuneGrassLight]),
+		RuneGrassHeavy:    tcell.StyleDefault.Foreground(symbolColors[RuneGrassHeavy]),
+		RuneWater:         tcell.StyleDefault.Foreground(symbolColors[RuneWater]),
+	}
 )
 
 // NOTE
