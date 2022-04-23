@@ -1,5 +1,7 @@
 package main
 
+import "github.com/gdamore/tcell"
+
 type Coordinate struct {
 	x int
 	y int
@@ -18,7 +20,7 @@ type Tree struct {
 }
 
 type Object struct {
-	char       rune
+	key        int
 	collidable bool // Are actors blocked
 	plantable  bool // Can seeds be planted here
 }
@@ -43,4 +45,9 @@ type Menu struct {
 	height   int
 	position Coordinate
 	messages []string
+}
+
+type Symbol struct {
+	char  rune
+	style tcell.Style
 }

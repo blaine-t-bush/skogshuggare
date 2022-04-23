@@ -70,25 +70,25 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(contentViewportX, contentViewportY, content.char, nil, symbolStyles[content.char])
+					screen.SetContent(contentViewportX, contentViewportY, symbols[content.key].char, nil, symbols[content.key].style)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeStump, nil, symbolStyles[RuneTreeStump])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStump].char, nil, symbols[KeyTreeStump].style)
 					case TreeStateTrunk:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeTrunk, nil, symbolStyles[RuneTreeTrunk])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
 					case TreeStateStumpling:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeStumpling, nil, symbolStyles[RuneTreeStumpling])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStumpling].char, nil, symbols[KeyTreeStumpling].style)
 					case TreeStateSapling:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeSapling, nil, symbolStyles[RuneTreeSapling])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSapling].char, nil, symbols[KeyTreeSapling].style)
 					case TreeStateSeed:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeSeed, nil, symbolStyles[RuneTreeSeed])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSeed].char, nil, symbols[KeyTreeSeed].style)
 					case TreeStateAdult:
-						screen.SetContent(contentViewportX, contentViewportY, RuneTreeTrunk, nil, symbolStyles[RuneTreeTrunk])
-						screen.SetContent(contentViewportX-1, contentViewportY-1, RuneTreeLeaves, nil, symbolStyles[RuneTreeLeaves])
-						screen.SetContent(contentViewportX, contentViewportY-1, RuneTreeLeaves, nil, symbolStyles[RuneTreeLeaves])
-						screen.SetContent(contentViewportX+1, contentViewportY-1, RuneTreeLeaves, nil, symbolStyles[RuneTreeLeaves])
+						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
+						screen.SetContent(contentViewportX-1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
+						screen.SetContent(contentViewportX, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
+						screen.SetContent(contentViewportX+1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
 					}
 				}
 			}
@@ -101,12 +101,12 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
 	w, h := screen.Size()
-	screen.SetContent(w/2, h/2, RunePlayer, nil, symbolStyles[RunePlayer]) // Draw the player at the "center" of the view
+	screen.SetContent(w/2, h/2, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
 }
 
 func (game *Game) DrawSquirrel(screen tcell.Screen) {
 	w, h := screen.Size()
-	screen.SetContent(w/2+game.squirrel.position.x-game.player.position.x, h/2+game.squirrel.position.y-game.player.position.y, RuneSquirrel, nil, symbolStyles[RuneSquirrel])
+	screen.SetContent(w/2+game.squirrel.position.x-game.player.position.x, h/2+game.squirrel.position.y-game.player.position.y, symbols[KeySquirrel].char, nil, symbols[KeySquirrel].style)
 
 }
 

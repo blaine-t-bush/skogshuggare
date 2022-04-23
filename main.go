@@ -79,14 +79,14 @@ func readMap(fileName string) (World, Coordinate, Coordinate) {
 		// Update the worldContent map according to special characters.
 		for i := 0; i < lineWidth; i++ {
 			switch data.Text()[i] {
-			case RunePlayer:
+			case MapPlayer:
 				playerPosition = Coordinate{i, height}
-			case RuneSquirrel:
+			case MapSquirrel:
 				squirrelPosition = Coordinate{i, height}
-			case RuneWall:
-				worldContent[Coordinate{i, height}] = Object{'#', true, false}
-			case RuneWater:
-				worldContent[Coordinate{i, height}] = Object{'~', true, false}
+			case MapWall:
+				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false}
+			case MapWater:
+				worldContent[Coordinate{i, height}] = Object{KeyWater, true, false}
 			}
 		}
 
