@@ -1,26 +1,8 @@
 package main
 
 import (
-	"math/rand"
-
 	"github.com/gdamore/tcell"
 )
-
-func GetRandomDirection() int {
-	randInt := rand.Intn(4)
-	switch randInt {
-	case 0:
-		return DirUp
-	case 1:
-		return DirRight
-	case 2:
-		return DirDown
-	case 3:
-		return DirLeft
-	default:
-		return DirNone
-	}
-}
 
 func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int) {
 	// Determine which actor to update.
@@ -57,10 +39,16 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 	}
 
 	// Prevent actor from moving through an collidable object.
-	obj, exists := game.world.content[Coordinate{newX, newY}]
-	if exists {
-		switch obj.(type) {
-		case Object, *Tree:
+	if content, exists := game.world.content[Coordinate{newX, newY}]; exists {
+		switch content := content.(type) {
+		case Object:
+			if content.collidable {
+				break
+			} else {
+				actor.position.y = newY
+				actor.position.x = newX
+			}
+		case *Tree:
 			break // Collide; do not change position.
 		default:
 			actor.position.y = newY
@@ -70,4 +58,16 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 		actor.position.y = newY
 		actor.position.x = newX
 	}
+}
+
+func (actor *Actor) IsAdjacentToDestination() bool {
+	dest := actor.destination
+	pos := actor.position
+	if dest.y == pos.y && (dest.x == pos.x+1 || dest.x == pos.x-1) {
+		return true
+	} else if dest.x == pos.x && (dest.y == pos.y+1 || dest.y == pos.y-1) {
+		return true
+	}
+
+	return false
 }

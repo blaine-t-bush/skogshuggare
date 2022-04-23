@@ -6,6 +6,12 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+var (
+	styleTreeWoodNormal = tcell.StyleDefault.Foreground(tcell.NewRGBColor(153, 77, 0))
+	styleTreeWoodLight  = tcell.StyleDefault.Foreground(tcell.NewRGBColor(230, 115, 0))
+	styleTreeLeaves     = tcell.StyleDefault.Foreground(tcell.NewRGBColor(20, 200, 20))
+)
+
 func (game *Game) Draw(screen tcell.Screen) {
 	screen.Clear()
 	game.DrawViewport(screen)
@@ -14,10 +20,11 @@ func (game *Game) Draw(screen tcell.Screen) {
 }
 
 // Only draw things within the player view range
+// Things are drawn in reverse order of importance: player is drawn last so they will be on top
+// The upside is that the player won't be hidden by grass or bridges.
+// The downside is that the player won't be hidden by tree canopies.
+// FIXME maybe there is a way to address this.
 func (game *Game) DrawViewport(screen tcell.Screen) {
-	game.DrawPlayer(screen)
-	game.DrawSquirrel(screen)
-
 	/*
 		view_radius = 5
 		y_up = 5
@@ -41,59 +48,62 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	for x := game.player.position.x - game.player.visionRadius; x <= game.player.position.x+game.player.visionRadius; x++ {
 		for y := game.player.position.y - game.player.visionRadius; y <= game.player.position.y+game.player.visionRadius; y++ {
 			coord := Coordinate{x, y}
-
-			w, h := screen.Size()
+      w, h := screen.Size()
+      
 			// Get the viewport coordinates
-			objViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-			objViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+      contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
+      contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
 
 			border, isBorder := game.world.borders[coord]
 			if isBorder {
 				switch border {
 				case TopBorder, BottomBorder:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneHLine, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneHLine, nil, tcell.StyleDefault)
 				case RightBorder, LeftBorder:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneVLine, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneVLine, nil, tcell.StyleDefault)
 				case TopLeftCorner:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneULCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneULCorner, nil, tcell.StyleDefault)
 				case TopRightCorner:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneURCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneURCorner, nil, tcell.StyleDefault)
 				case BottomRightCorner:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneLRCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 				case BottomLeftCorner:
-					screen.SetContent(objViewportX, objViewportY, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneLLCorner, nil, tcell.StyleDefault)
 				}
 				continue
 			}
 
-			obj, found := game.world.content[coord]
-			if found {
-				switch obj.(type) {
+			if content, found := game.world.content[Coordinate{x, y}]; found {
+				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(objViewportX, objViewportY, '#', nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportX, contentViewportY, content.char, nil, tcell.StyleDefault.Foreground(tcell.NewRGBColor(content.r, content.g, content.b)))
 				case *Tree:
-					tree := obj.(*Tree)
 					// Draw tree
-					switch tree.state {
+					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(objViewportX, objViewportY, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '▄', nil, styleTreeWoodNormal)
 					case TreeStateTrunk:
-						screen.SetContent(objViewportX, objViewportY, '█', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, styleTreeWoodNormal)
 					case TreeStateStumpling:
-						screen.SetContent(objViewportX, objViewportY, '╻', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '╻', nil, styleTreeWoodLight)
 					case TreeStateSapling:
-						screen.SetContent(objViewportX, objViewportY, '┃', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '┃', nil, styleTreeWoodLight)
 					case TreeStateSeed:
-						screen.SetContent(objViewportX, objViewportY, '.', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '.', nil, styleTreeWoodLight)
 					case TreeStateAdult:
-						screen.SetContent(objViewportX, objViewportY, '█', nil, tcell.StyleDefault)
-						screen.SetContent(objViewportX, objViewportY-1, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, styleTreeWoodNormal)
+						screen.SetContent(contentViewportX-1, contentViewportY-1, '▓', nil, styleTreeLeaves)
+						screen.SetContent(contentViewportX, contentViewportY-1, '▓', nil, styleTreeLeaves)
+						screen.SetContent(contentViewportX+1, contentViewportY-1, '▓', nil, styleTreeLeaves)
 					}
 				}
 			}
 		}
 	}
+
+	game.DrawSquirrel(screen)
+	game.DrawPlayer(screen)
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {

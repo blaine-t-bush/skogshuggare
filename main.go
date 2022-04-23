@@ -14,6 +14,17 @@ import (
 )
 
 func main() {
+	// Initialize game state.
+	w, h := screen.Size()
+	game := Game{
+		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100, score: 0},
+		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
+		border:   Border{0, w - 1, 0, h - 1, 1},
+		world:    readMap("kartor/skog.karta"),
+		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
+		exit:     false,
+	}
+  
 	// Seed randomizer.
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -32,19 +43,9 @@ func main() {
 	screen.SetStyle(tcell.StyleDefault)
 	screen.Clear()
 
-	// Initialize game state.
-	w, h := screen.Size()
-	game := Game{
-		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100, score: 0},
-		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
-		border:   Border{0, w - 1, 0, h - 1, 1},
-		world:    readMap("kartor/skog.karta"),
-		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
-		exit:     false,
-	}
-
 	// Randomly seed map with trees in various states.
 	game.PopulateTrees(screen)
+	game.PopulateGrass(screen)
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
@@ -56,7 +57,7 @@ func main() {
 
 func readMap(fileName string) World {
 	filebuffer, err := ioutil.ReadFile(fileName)
-	world_content := make(map[Coordinate]interface{})
+	worldContent := make(map[Coordinate]interface{})
 
 	if err != nil {
 		fmt.Println(err)
@@ -65,24 +66,30 @@ func readMap(fileName string) World {
 
 	filedata := string(filebuffer)
 	data := bufio.NewScanner(strings.NewReader(filedata))
-	data.Split(bufio.ScanRunes)
+	data.Split(bufio.ScanLines)
 	width := 0
 	height := 0
-	xmax := false
-	x := 0
 	for data.Scan() {
-		if data.Text()[0] == '\n' {
-			height++
-			x = 0
-			xmax = true
-			continue
-		} else if data.Text()[0] == '#' {
-			world_content[Coordinate{x, height}] = Object{'#', true}
+		// Check if width needs to be updated. It's determined by the longest line.
+		lineWidth := len(data.Text())
+		if lineWidth > width {
+			width = lineWidth
 		}
-		if !xmax {
-			width++
+
+		// Update the worldContent map according to special characters.
+		for i := 0; i < lineWidth; i++ {
+			switch data.Text()[i] {
+			case '#': // wall
+				worldContent[Coordinate{i, height}] = Object{'#', true, false, 255, 255, 255}
+			case '~': // water
+				worldContent[Coordinate{i, height}] = Object{'~', true, false, 10, 10, 200}
+			case '=': // bridge
+				worldContent[Coordinate{i, height}] = Object{'=', false, false, 150, 70, 0}
+			}
 		}
-		x++
+
+		// Increment the height once for each row.
+		height++
 	}
 
 	_borders := make(map[Coordinate]int)
@@ -94,7 +101,7 @@ func readMap(fileName string) World {
 		}
 	}
 
-	return World{width, height, _borders, world_content}
+	return World{width, height, _borders, worldContent}
 }
 
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
@@ -150,7 +157,31 @@ func (game *Game) Update(screen tcell.Screen) {
 		screen.Sync()
 	}
 
-	// Update the non-player parts of game state.
-	game.MoveActor(screen, ActorSquirrel, 1, DirRandom)
+	// Give the squirrel a destination if it doesn't alreasdy have one,
+	// or update its destination if it's blocked.
+	if (Coordinate{0, 0} == game.squirrel.destination) || game.IsBlocked(game.squirrel.destination) {
+		game.squirrel.destination = game.GetRandomPlantableCoordinate()
+	}
+
+	// If squirrel is one move away from its destination, then it plants the seed at the destination,
+	// i.e. one tile away, and then picks a new destination.
+	// Otherwise, it just moves towards its current destination.
+	if game.squirrel.IsAdjacentToDestination() {
+		game.PlantSeed(game.squirrel.destination)
+		game.squirrel.destination = game.GetRandomPlantableCoordinate()
+	} else {
+		var nextDirection int
+		for {
+			nextDirection = game.FindNextDirection(game.squirrel.position, game.squirrel.destination)
+			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
+				game.squirrel.destination = game.GetRandomPlantableCoordinate()
+			} else {
+				break
+			}
+		}
+		game.MoveActor(screen, ActorSquirrel, 1, nextDirection)
+	}
+
+	// Update trees.
 	game.GrowTrees()
 }
