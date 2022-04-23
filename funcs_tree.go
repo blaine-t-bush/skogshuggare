@@ -96,6 +96,7 @@ func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate) bool {
 			return true
 		case TreeStateStump, TreeStateStumpling:
 			delete(game.world.content, position)
+			game.player.score++ // Increase player score when tree is felled
 			return true
 		}
 	default:

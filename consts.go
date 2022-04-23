@@ -31,6 +31,15 @@ const (
 	GrowthChanceSapling = 0.005 // Sapling to adult
 	SeedCreationChance  = 0.005 // Seed spawning
 	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
+	// Border states
+	TopBorder         = 100
+	RightBorder       = 101
+	BottomBorder      = 102
+	LeftBorder        = 103
+	TopLeftCorner     = 104
+	TopRightCorner    = 105
+	BottomRightCorner = 106
+	BottomLeftCorner  = 107
 )
 
 // NOTE

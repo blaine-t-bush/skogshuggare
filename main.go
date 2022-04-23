@@ -15,13 +15,16 @@ import (
 
 func main() {
 	// Initialize game state.
+	w, h := screen.Size()
 	game := Game{
-		player:   Actor{position: Coordinate{x: 38, y: 5}, visionRadius: 100},
-		squirrel: Actor{position: Coordinate{x: 10, y: 19}, visionRadius: 100},
-		world:    readMap("kartor/flod.karta"),
+		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100, score: 0},
+		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100, score: 0},
+		border:   Border{0, w - 1, 0, h - 1, 1},
+		world:    readMap("kartor/skog.karta"),
+		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
 		exit:     false,
 	}
-
+  
 	// Seed randomizer.
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -89,7 +92,16 @@ func readMap(fileName string) World {
 		height++
 	}
 
-	return World{width, height, worldContent}
+	_borders := make(map[Coordinate]int)
+
+	for c := range world_content {
+		border, isBorder := IsBorder(width, height, c)
+		if isBorder {
+			_borders[c] = border
+		}
+	}
+
+	return World{width, height, _borders, worldContent}
 }
 
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
