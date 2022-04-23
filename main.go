@@ -14,8 +14,15 @@ import (
 )
 
 func main() {
+	var mapName string
+	if len(os.Args[1:]) == 1 {
+		mapName = os.Args[1]
+	} else {
+		// Couldn't parse map name from command line. Using default map.
+		mapName = "skog"
+	}
 	// Read map to initialize game state.
-	worldContent, playerPosition, squirrelPosition := readMap("kartor/ö.karta")
+	worldContent, playerPosition, squirrelPosition := readMap("kartor/" + mapName + ".karta")
 	game := Game{
 		player:   Actor{position: playerPosition, visionRadius: 100, score: 0},
 		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
