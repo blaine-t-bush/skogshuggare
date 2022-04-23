@@ -16,9 +16,9 @@ import (
 func main() {
 	// Initialize game state.
 	game := Game{
-		player:   Actor{position: Coordinate{x: 5, y: 5}, visionRadius: 100},
-		squirrel: Actor{position: Coordinate{x: 10, y: 10}, visionRadius: 100},
-		world:    readMap("kartor/skog.karta"),
+		player:   Actor{position: Coordinate{x: 38, y: 5}, visionRadius: 100},
+		squirrel: Actor{position: Coordinate{x: 10, y: 19}, visionRadius: 100},
+		world:    readMap("kartor/flod.karta"),
 		exit:     false,
 	}
 
@@ -75,8 +75,13 @@ func readMap(fileName string) World {
 
 		// Update the worldContent map according to special characters.
 		for i := 0; i < lineWidth; i++ {
-			if data.Text()[i] == '#' {
-				worldContent[Coordinate{i, height}] = Object{'#', true}
+			switch data.Text()[i] {
+			case '#': // wall
+				worldContent[Coordinate{i, height}] = Object{'#', true, false, 255, 255, 255}
+			case '~': // water
+				worldContent[Coordinate{i, height}] = Object{'~', true, false, 10, 10, 200}
+			case '=': // bridge
+				worldContent[Coordinate{i, height}] = Object{'=', false, false, 150, 70, 0}
 			}
 		}
 
@@ -143,7 +148,7 @@ func (game *Game) Update(screen tcell.Screen) {
 	// Give the squirrel a destination if it doesn't alreasdy have one,
 	// or update its destination if it's blocked.
 	if (Coordinate{0, 0} == game.squirrel.destination) || game.IsBlocked(game.squirrel.destination) {
-		game.squirrel.destination = game.GetRandomAvailableCoordinate()
+		game.squirrel.destination = game.GetRandomPlantableCoordinate()
 	}
 
 	// If squirrel is one move away from its destination, then it plants the seed at the destination,
@@ -151,13 +156,13 @@ func (game *Game) Update(screen tcell.Screen) {
 	// Otherwise, it just moves towards its current destination.
 	if game.squirrel.IsAdjacentToDestination() {
 		game.PlantSeed(game.squirrel.destination)
-		game.squirrel.destination = game.GetRandomAvailableCoordinate()
+		game.squirrel.destination = game.GetRandomPlantableCoordinate()
 	} else {
 		var nextDirection int
 		for {
 			nextDirection = game.FindNextDirection(game.squirrel.position, game.squirrel.destination)
 			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
-				game.squirrel.destination = game.GetRandomAvailableCoordinate()
+				game.squirrel.destination = game.GetRandomPlantableCoordinate()
 			} else {
 				break
 			}

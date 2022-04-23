@@ -16,7 +16,7 @@ const (
 	Infinity = 9999999
 )
 
-// Returns true if coordinate contains a collidable non-actor.
+// Returns true if coordinate contains a collidable object, or a tree.
 func (game *Game) IsBlocked(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
 		switch content := content.(type) {
@@ -27,7 +27,22 @@ func (game *Game) IsBlocked(coordinate Coordinate) bool {
 		case *Tree:
 			return true
 		}
-		return true
+	}
+
+	return false
+}
+
+// Returns true if coordinate contains a collidable or non-plantable object, or a tree.
+func (game *Game) IsUnplantable(coordinate Coordinate) bool {
+	if content, exists := game.world.content[coordinate]; exists {
+		switch content := content.(type) {
+		case Object:
+			if content.collidable || !content.plantable {
+				return true
+			}
+		case *Tree:
+			return true
+		}
 	}
 
 	return false
@@ -51,6 +66,19 @@ func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 	for {
 		if game.IsBlocked(coordinate) {
+			coordinate = Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+		} else {
+			break
+		}
+	}
+
+	return coordinate
+}
+
+func (game *Game) GetRandomPlantableCoordinate() Coordinate {
+	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+	for {
+		if game.IsUnplantable(coordinate) {
 			coordinate = Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 		} else {
 			break

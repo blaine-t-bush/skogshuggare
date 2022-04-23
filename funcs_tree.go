@@ -26,7 +26,7 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	treeCount := 0
 	for i := 0; i < maxTreeCount; i++ {
 		state := states[rand.Intn(len(states))]
-		coordinate := game.GetRandomAvailableCoordinate()
+		coordinate := game.GetRandomPlantableCoordinate()
 		game.world.content[coordinate] = &Tree{coordinate, state}
 		treeCount++
 	}
@@ -35,15 +35,16 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 }
 
 func (game *Game) PopulateGrass(screen tcell.Screen) int {
+	runes := []rune{
+		'"',
+		'\'',
+	}
 	maxGrassCount := rand.Intn(10) + 6
 	grassCount := 0
 	for i := 0; i < maxGrassCount; i++ {
-		coordinate := game.GetRandomAvailableCoordinate()
-		if rand.Intn(2) == 0 {
-			game.world.content[coordinate] = Object{'"', false}
-		} else {
-			game.world.content[coordinate] = Object{'\'', false}
-		}
+		rune := runes[rand.Intn(len(runes))]
+		coordinate := game.GetRandomPlantableCoordinate()
+		game.world.content[coordinate] = Object{rune, false, false, 10, 240, 10}
 		grassCount++
 	}
 
