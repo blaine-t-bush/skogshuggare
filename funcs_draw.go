@@ -2,6 +2,12 @@ package main
 
 import "github.com/gdamore/tcell"
 
+var (
+	styleTreeWoodNormal = tcell.StyleDefault.Foreground(tcell.NewRGBColor(153, 77, 0))
+	styleTreeWoodLight  = tcell.StyleDefault.Foreground(tcell.NewRGBColor(230, 115, 0))
+	styleTreeLeaves     = tcell.StyleDefault.Foreground(tcell.NewRGBColor(20, 200, 20))
+)
+
 func (game *Game) Draw(screen tcell.Screen) {
 	screen.Clear()
 	game.DrawViewport(screen)
@@ -47,18 +53,20 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(contentViewportX, contentViewportY, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '▄', nil, styleTreeWoodNormal)
 					case TreeStateTrunk:
-						screen.SetContent(contentViewportX, contentViewportY, '█', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, styleTreeWoodNormal)
 					case TreeStateStumpling:
-						screen.SetContent(contentViewportX, contentViewportY, '╻', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '╻', nil, styleTreeWoodLight)
 					case TreeStateSapling:
-						screen.SetContent(contentViewportX, contentViewportY, '┃', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '┃', nil, styleTreeWoodLight)
 					case TreeStateSeed:
-						screen.SetContent(contentViewportX, contentViewportY, '.', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '.', nil, styleTreeWoodLight)
 					case TreeStateAdult:
-						screen.SetContent(contentViewportX, contentViewportY, '█', nil, tcell.StyleDefault)
-						screen.SetContent(contentViewportX, contentViewportY-1, '▄', nil, tcell.StyleDefault)
+						screen.SetContent(contentViewportX, contentViewportY, '█', nil, styleTreeWoodNormal)
+						screen.SetContent(contentViewportX-1, contentViewportY-1, '▓', nil, styleTreeLeaves)
+						screen.SetContent(contentViewportX, contentViewportY-1, '▓', nil, styleTreeLeaves)
+						screen.SetContent(contentViewportX+1, contentViewportY-1, '▓', nil, styleTreeLeaves)
 					}
 				}
 			}
