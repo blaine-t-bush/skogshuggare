@@ -62,6 +62,20 @@ const (
 )
 
 var (
+	treeGrowingStages = map[int]GrowthInfo{ // For a given state (key), gives the next growth state (value.newState) and chance [0-1] of the next growth stage (value.chance)
+		TreeStateSeed:    {newState: TreeStateSapling, chance: GrowthChanceSeed},
+		TreeStateSapling: {newState: TreeStateAdult, chance: GrowthChanceSeed},
+	}
+
+	treeHarvestingStages = map[int]int{ // For a given state (key), gives the next harvesting state (value)
+		TreeStateSeed:      TreeStateRemoved,
+		TreeStateSapling:   TreeStateStumpling,
+		TreeStateStumpling: TreeStateRemoved,
+		TreeStateAdult:     TreeStateTrunk,
+		TreeStateTrunk:     TreeStateStump,
+		TreeStateStump:     TreeStateRemoved,
+	}
+
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
 		KeyPlayer:        {char: '@', style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
 		KeySquirrel:      {char: 's', style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},

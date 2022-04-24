@@ -57,12 +57,11 @@ func (game *Game) GrowTrees() int {
 	for _, content := range game.world.content {
 		switch content := content.(type) {
 		case *Tree:
-			if content.state == TreeStateSeed && rand.Float64() <= GrowthChanceSeed {
-				content.state = TreeStateSapling
-				growthCount++
-			} else if content.state == TreeStateSapling && rand.Float64() <= GrowthChanceSapling {
-				content.state = TreeStateAdult
-				growthCount++
+			if growthInfo, exists := treeGrowingStages[content.state]; exists {
+				if rand.Float64() <= growthInfo.chance {
+					content.state = growthInfo.newState
+					growthCount++
+				}
 			}
 		}
 	}
@@ -70,43 +69,37 @@ func (game *Game) GrowTrees() int {
 	return growthCount
 }
 
-func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate) bool {
-	// adult ------> trunk
-	// trunk ------> stump
-	// stump ------> removed
-	// sapling ----> stumpling
-	// stumpling --> removed
+func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate, stages int) bool {
 	content, exists := game.world.content[position]
 
-	if !exists {
+	if !exists { // No content of any type at this location
 		return false
 	}
 
 	switch content := content.(type) {
 	case *Tree:
-		switch content.state {
-		case TreeStateAdult:
-			content.state = TreeStateTrunk
-			return true
-		case TreeStateTrunk:
-			content.state = TreeStateStump
-			return true
-		case TreeStateSapling:
-			content.state = TreeStateStumpling
-			return true
-		case TreeStateStump, TreeStateStumpling:
+		var exists bool
+		newState := content.state
+		for i := 0; i < stages; i++ { // We move down the harvesting stages one or more times
+			newState, exists = treeHarvestingStages[newState]
+			if !exists {
+				return false
+			}
+		}
+
+		if newState == TreeStateRemoved {
 			delete(game.world.content, position)
 			game.player.score++ // Increase player score when tree is felled
-			return true
 		}
+
+		content.state = newState
+		return true
 	default:
 		return false // Coordinate does not correspond to a tree
 	}
-
-	return false
 }
 
-func (game *Game) Chop(screen tcell.Screen, dir int) int {
+func (game *Game) Chop(screen tcell.Screen, dir int, stages int) int {
 	choppedCount := 0
 outside:
 	for _, content := range game.world.content {
@@ -118,26 +111,26 @@ outside:
 			isLeft := content.position.y == game.player.position.y && content.position.x == game.player.position.x-1
 			switch dir {
 			case DirOmni:
-				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, content.position) {
+				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, content.position, stages) {
 					choppedCount++
 				}
 			case DirUp:
-				if isAbove && game.DecrementTree(screen, content.position) {
+				if isAbove && game.DecrementTree(screen, content.position, stages) {
 					choppedCount++
 					break outside
 				}
 			case DirRight:
-				if isRight && game.DecrementTree(screen, content.position) {
+				if isRight && game.DecrementTree(screen, content.position, stages) {
 					choppedCount++
 					break outside
 				}
 			case DirDown:
-				if isBelow && game.DecrementTree(screen, content.position) {
+				if isBelow && game.DecrementTree(screen, content.position, stages) {
 					choppedCount++
 					break outside
 				}
 			case DirLeft:
-				if isLeft && game.DecrementTree(screen, content.position) {
+				if isLeft && game.DecrementTree(screen, content.position, stages) {
 					choppedCount++
 					break outside
 				}

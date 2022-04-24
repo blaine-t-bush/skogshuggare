@@ -51,3 +51,8 @@ type Symbol struct {
 	char  rune
 	style tcell.Style
 }
+
+type GrowthInfo struct {
+	newState int
+	chance   float64
+}

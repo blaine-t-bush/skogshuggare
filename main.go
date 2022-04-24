@@ -152,15 +152,15 @@ func (game *Game) Update(screen tcell.Screen) {
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune(' '):
-				game.Chop(screen, DirOmni)
+				game.Chop(screen, DirOmni, 1)
 			case rune('w'):
-				game.Chop(screen, DirUp)
+				game.Chop(screen, DirUp, 1)
 			case rune('d'):
-				game.Chop(screen, DirRight)
+				game.Chop(screen, DirRight, 1)
 			case rune('s'):
-				game.Chop(screen, DirDown)
+				game.Chop(screen, DirDown, 1)
 			case rune('a'):
-				game.Chop(screen, DirLeft)
+				game.Chop(screen, DirLeft, 1)
 			}
 		}
 	case *tcell.EventResize:
