@@ -14,10 +14,7 @@ func (game *Game) Draw(screen tcell.Screen) {
 }
 
 // Only draw things within the player view range
-// Things are drawn in reverse order of importance: player is drawn last so they will be on top
-// The upside is that the player won't be hidden by grass or bridges.
-// The downside is that the player won't be hidden by tree canopies.
-// FIXME maybe there is a way to address this.
+// Draw the player last, run checks in DrawPlayer function to check if player should be drawn or not.
 func (game *Game) DrawViewport(screen tcell.Screen) {
 	/*
 		view_radius = 5
@@ -101,7 +98,13 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
 	w, h := screen.Size()
-	screen.SetContent(w/2, h/2, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
+	playerX, playerY := w/2, h/2 // Save player position to these variables. Previous implementation caused variables to be changed multiple times.
+	// TODO implement functionality to allow other runes than tree canopies to be drawn instead of the player.
+	// Currently only draws tree canopies above player.
+	cellRune, _, _, _ := screen.GetContent(playerX, playerY) // Only get the rune from the screen, other return values are not needed.
+	if cellRune != symbols[KeyTreeLeaves].char {
+		screen.SetContent(playerX, playerY, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
+	}
 }
 
 func (game *Game) DrawSquirrel(screen tcell.Screen) {
