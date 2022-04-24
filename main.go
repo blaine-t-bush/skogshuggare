@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -14,17 +15,28 @@ import (
 )
 
 func main() {
+	// Attempt to get map name from command line args.
 	var mapName string
-	if len(os.Args[1:]) == 1 {
+	if len(os.Args[1:]) >= 1 {
 		mapName = os.Args[1]
 	} else {
 		// Couldn't parse map name from command line. Using default map.
 		mapName = "skog"
 	}
+
+	// Attempt to get vision radius from command line args.
+	var visionRadius int
+	if len(os.Args[2:]) >= 1 {
+		visionRadius, _ = strconv.Atoi(os.Args[2])
+	} else {
+		// Couldn't parse map name from command line. Using default map.
+		visionRadius = 20
+	}
+
 	// Read map to initialize game state.
 	worldContent, playerPosition, squirrelPosition := readMap("kartor/" + mapName + ".karta")
 	game := Game{
-		player:   Actor{position: playerPosition, visionRadius: 100, score: 0},
+		player:   Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
 		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
 		world:    worldContent,
 		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
