@@ -14,9 +14,6 @@ func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int
 		actor = &game.squirrel
 	}
 
-	// Un-draw the actor at its existing location.
-	game.ClearActor(screen, actorType)
-
 	// Determine (potential) new location.
 	if dir == DirRandom {
 		dir = GetRandomDirection()

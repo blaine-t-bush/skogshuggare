@@ -38,7 +38,10 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 
 	w, h := screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
-	game.DrawPlayer(screen)
+	squirrelViewportCoord := Coordinate{playerViewportCoord.x + game.squirrel.position.x - game.player.position.x, playerViewportCoord.y + game.squirrel.position.y - game.player.position.y}
+	actorViewportCoords := []Coordinate{playerViewportCoord, squirrelViewportCoord}
+	game.DrawContent(screen, KeyPlayer, playerViewportCoord, []Coordinate{})
+	game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
 
 	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
 	for x := xRadiusMin; x <= xRadiusMax; x++ {
@@ -72,45 +75,43 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					game.DrawContent(screen, content.key, contentViewportCoord, playerViewportCoord)
+					game.DrawContent(screen, content.key, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						game.DrawContent(screen, KeyTreeStump, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeStump, contentViewportCoord, actorViewportCoords)
 					case TreeStateTrunk:
-						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
 					case TreeStateStumpling:
-						game.DrawContent(screen, KeyTreeStumpling, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeStumpling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSapling:
-						game.DrawContent(screen, KeyTreeSapling, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeSapling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSeed:
-						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, actorViewportCoords)
 					case TreeStateAdult:
-						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, playerViewportCoord)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x - 1, contentViewportCoord.y - 1}, playerViewportCoord)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x, contentViewportCoord.y - 1}, playerViewportCoord)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x + 1, contentViewportCoord.y - 1}, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x - 1, contentViewportCoord.y - 1}, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x, contentViewportCoord.y - 1}, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x + 1, contentViewportCoord.y - 1}, actorViewportCoords)
 					}
 				}
-			}
-
-			if coord == game.squirrel.position {
-				game.DrawContent(screen, KeySquirrel, contentViewportCoord, playerViewportCoord)
 			}
 		}
 	}
 }
 
-func (game *Game) DrawPlayer(screen tcell.Screen) {
-	w, h := screen.Size()
-	playerX, playerY := w/2, h/2                                                                // Save player position to these variables. Previous implementation caused variables to be changed multiple times.
-	screen.SetContent(playerX, playerY, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
-}
-
-func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, playerCoord Coordinate) {
+// Draws content for the given key at the given coord, but only if that coord is not in priorityCoords
+func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, priorityCoords []Coordinate) {
 	symbol := symbols[key]
-	if coord != playerCoord || symbol.aboveActor {
+	draw := true
+	for _, priorityCoord := range priorityCoords {
+		if coord == priorityCoord && !symbol.aboveActor {
+			draw = false
+		}
+	}
+
+	if draw {
 		screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
 	}
 }
