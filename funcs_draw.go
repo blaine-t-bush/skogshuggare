@@ -36,8 +36,10 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 		Player pos = (5,5)
 	*/
 
-	for x := game.player.position.x - game.player.visionRadius; x <= game.player.position.x+game.player.visionRadius; x++ {
-		for y := game.player.position.y - game.player.visionRadius; y <= game.player.position.y+game.player.visionRadius; y++ {
+	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
+
+	for x := xRadiusMin; x <= xRadiusMax; x++ {
+		for y := yRadiusMin; y <= yRadiusMax; y++ {
 			coord := Coordinate{x, y}
 			w, h := screen.Size()
 
@@ -179,7 +181,7 @@ func (game *Game) PrintToMenu(screen tcell.Screen) {
 }
 
 func (game *Game) AppendToMenuMessages(text string) {
-	if len(game.menu.messages) <= 3 {
+	if len(game.menu.messages) <= 2 {
 		game.menu.messages = append(game.menu.messages, text)
 	} else {
 		game.menu.messages = append(game.menu.messages[:0], game.menu.messages[1:]...)
@@ -227,4 +229,29 @@ func IsBorder(width int, height int, coord Coordinate) (response int, ok bool) {
 	}
 
 	return -1, false
+}
+
+func (game *Game) GetDrawRanges() (xRadiusMin int, xRadiusMax int, yRadiusMin int, yRadiusMax int) {
+	xRadiusMin = 0
+	xRadiusMax = game.world.width
+	yRadiusMin = 0
+	yRadiusMax = game.world.height
+
+	if game.player.position.x-game.player.visionRadius > 0 {
+		xRadiusMin = game.player.position.x - game.player.visionRadius
+	}
+
+	if game.player.position.x+game.player.visionRadius < game.world.width {
+		xRadiusMax = game.player.position.x + game.player.visionRadius
+	}
+
+	if game.player.position.y-game.player.visionRadius > 0 {
+		yRadiusMin = game.player.position.y - game.player.visionRadius
+	}
+
+	if game.player.position.y+game.player.visionRadius < game.world.height {
+		yRadiusMax = game.player.position.y + game.player.visionRadius
+	}
+
+	return xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax
 }
