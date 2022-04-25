@@ -33,11 +33,11 @@ type World struct {
 }
 
 type Game struct {
-	player   Actor
-	squirrel Actor
-	world    World
-	menu     Menu
-	exit     bool
+	player    Actor
+	squirrels map[int]*Actor
+	world     World
+	menu      Menu
+	exit      bool
 }
 
 type Menu struct {

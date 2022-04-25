@@ -36,13 +36,22 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 		Player pos = (5,5)
 	*/
 
+	// Draw player.
 	w, h := screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
-	squirrelViewportCoord := Coordinate{playerViewportCoord.x + game.squirrel.position.x - game.player.position.x, playerViewportCoord.y + game.squirrel.position.y - game.player.position.y}
-	actorViewportCoords := []Coordinate{playerViewportCoord, squirrelViewportCoord}
 	game.DrawContent(screen, KeyPlayer, playerViewportCoord, []Coordinate{})
-	game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
 
+	// Draw squirrels.
+	var squirrelViewportCoord Coordinate
+	var squirrelViewportCoords []Coordinate
+	for _, squirrel := range game.squirrels {
+		squirrelViewportCoord = Coordinate{playerViewportCoord.x + squirrel.position.x - game.player.position.x, playerViewportCoord.y + squirrel.position.y - game.player.position.y}
+		game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
+		squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
+	}
+
+	// Draw content.
+	actorViewportCoords := append(squirrelViewportCoords, playerViewportCoord)
 	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
 	for x := xRadiusMin; x <= xRadiusMax; x++ {
 		for y := yRadiusMin; y <= yRadiusMax; y++ {
@@ -145,17 +154,6 @@ func (game *Game) DrawMenuBorder(screen tcell.Screen) {
 	screen.SetContent(game.menu.width, 0, tcell.RuneURCorner, nil, tcell.StyleDefault)
 	screen.SetContent(0, game.menu.height, tcell.RuneLLCorner, nil, tcell.StyleDefault)
 	screen.SetContent(game.menu.width, game.menu.height, tcell.RuneLRCorner, nil, tcell.StyleDefault)
-}
-
-func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
-	var actor Actor
-	switch actorType {
-	case ActorPlayer:
-		actor = game.player
-	case ActorSquirrel:
-		actor = game.squirrel
-	}
-	screen.SetContent(actor.position.x, actor.position.y, ' ', nil, tcell.StyleDefault)
 }
 
 func (game *Game) PrintToMenu(screen tcell.Screen) {

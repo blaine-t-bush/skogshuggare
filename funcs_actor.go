@@ -4,15 +4,15 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-func (game *Game) MoveActor(screen tcell.Screen, actorType int, len int, dir int) {
-	// Determine which actor to update.
-	var actor *Actor
-	switch actorType {
-	case ActorPlayer:
-		actor = &game.player
-	case ActorSquirrel:
-		actor = &game.squirrel
-	}
+func (game *Game) MoveSquirrel(screen tcell.Screen, len int, dir int, squirrelKey int) {
+	game.MoveActor(screen, game.squirrels[squirrelKey], len, dir)
+}
+
+func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
+	game.MoveActor(screen, &game.player, len, dir)
+}
+
+func (game *Game) MoveActor(screen tcell.Screen, actor *Actor, len int, dir int) {
 
 	// Determine (potential) new location.
 	if dir == DirRandom {

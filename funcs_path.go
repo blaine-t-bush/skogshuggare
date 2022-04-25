@@ -50,8 +50,14 @@ func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 
 // Returns true if coordinate contains an actor.
 func (game *Game) IsOccupied(coordinate Coordinate) bool {
-	if game.player.position == coordinate || game.squirrel.position == coordinate {
+	if game.player.position == coordinate {
 		return true
+	}
+
+	for _, squirrel := range game.squirrels {
+		if squirrel.position == coordinate {
+			return true
+		}
 	}
 
 	return false

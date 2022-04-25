@@ -34,13 +34,17 @@ func main() {
 	}
 
 	// Read map to initialize game state.
-	worldContent, playerPosition, squirrelPosition := readMap("kartor/" + mapName + ".karta")
+	worldContent, playerPosition, squirrelPositions := readMap("kartor/" + mapName + ".karta")
+	squirrels := make(map[int]*Actor)
+	for index, position := range squirrelPositions {
+		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0}
+	}
 	game := Game{
-		player:   Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
-		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
-		world:    worldContent,
-		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
-		exit:     false,
+		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
+		squirrels: squirrels,
+		world:     worldContent,
+		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
+		exit:      false,
 	}
 
 	// Seed randomizer.
@@ -73,7 +77,7 @@ func main() {
 	screen.Fini()
 }
 
-func readMap(fileName string) (World, Coordinate, Coordinate) {
+func readMap(fileName string) (World, Coordinate, []Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
 	worldContent := make(map[Coordinate]interface{})
 
@@ -87,7 +91,8 @@ func readMap(fileName string) (World, Coordinate, Coordinate) {
 	data.Split(bufio.ScanLines)
 	width := 0
 	height := 0
-	var playerPosition, squirrelPosition Coordinate
+	var playerPosition Coordinate
+	var squirrelPositions []Coordinate
 	for data.Scan() {
 		// Check if width needs to be updated. It's determined by the longest line.
 		lineWidth := len(data.Text())
@@ -101,7 +106,7 @@ func readMap(fileName string) (World, Coordinate, Coordinate) {
 			case MapPlayer:
 				playerPosition = Coordinate{i, height}
 			case MapSquirrel:
-				squirrelPosition = Coordinate{i, height}
+				squirrelPositions = append(squirrelPositions, Coordinate{i, height})
 			case MapWall:
 				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false}
 			case MapWaterLight:
@@ -123,7 +128,7 @@ func readMap(fileName string) (World, Coordinate, Coordinate) {
 		}
 	}
 
-	return World{width, height, _borders, worldContent}, playerPosition, squirrelPosition
+	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
 func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
@@ -154,13 +159,13 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.exit = true
 			return
 		case tcell.KeyUp:
-			game.MoveActor(screen, ActorPlayer, 1, DirUp)
+			game.MovePlayer(screen, 1, DirUp)
 		case tcell.KeyRight:
-			game.MoveActor(screen, ActorPlayer, 1, DirRight)
+			game.MovePlayer(screen, 1, DirRight)
 		case tcell.KeyDown:
-			game.MoveActor(screen, ActorPlayer, 1, DirDown)
+			game.MovePlayer(screen, 1, DirDown)
 		case tcell.KeyLeft:
-			game.MoveActor(screen, ActorPlayer, 1, DirLeft)
+			game.MovePlayer(screen, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune(' '):
@@ -181,27 +186,29 @@ func (game *Game) Update(screen tcell.Screen) {
 
 	// Give the squirrel a destination if it doesn't alreasdy have one,
 	// or update its destination if it's blocked.
-	if (Coordinate{0, 0} == game.squirrel.destination) || game.IsBlocked(game.squirrel.destination) {
-		game.squirrel.destination = game.GetRandomPlantableCoordinate()
-	}
-
-	// If squirrel is one move away from its destination, then it plants the seed at the destination,
-	// i.e. one tile away, and then picks a new destination.
-	// Otherwise, it just moves towards its current destination.
-	if game.squirrel.IsAdjacentToDestination() {
-		game.PlantSeed(game.squirrel.destination)
-		game.squirrel.destination = game.GetRandomPlantableCoordinate()
-	} else {
-		var nextDirection int
-		for {
-			nextDirection = game.FindNextDirection(game.squirrel.position, game.squirrel.destination)
-			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
-				game.squirrel.destination = game.GetRandomPlantableCoordinate()
-			} else {
-				break
-			}
+	for key, squirrel := range game.squirrels {
+		if (Coordinate{0, 0} == squirrel.destination) || game.IsBlocked(squirrel.destination) {
+			squirrel.destination = game.GetRandomPlantableCoordinate()
 		}
-		game.MoveActor(screen, ActorSquirrel, 1, nextDirection)
+
+		// If squirrel is one move away from its destination, then it plants the seed at the destination,
+		// i.e. one tile away, and then picks a new destination.
+		// Otherwise, it just moves towards its current destination.
+		if squirrel.IsAdjacentToDestination() {
+			game.PlantSeed(squirrel.destination)
+			squirrel.destination = game.GetRandomPlantableCoordinate()
+		} else {
+			var nextDirection int
+			for {
+				nextDirection = game.FindNextDirection(squirrel.position, squirrel.destination)
+				if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
+					squirrel.destination = game.GetRandomPlantableCoordinate()
+				} else {
+					break
+				}
+			}
+			game.MoveSquirrel(screen, 1, nextDirection, key)
+		}
 	}
 
 	// Update trees.
