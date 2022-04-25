@@ -36,14 +36,18 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 		Player pos = (5,5)
 	*/
 
+	w, h := screen.Size()
+	playerViewportCoord := Coordinate{w / 2, h / 2}
+	game.DrawPlayer(screen)
+
 	for x := game.player.position.x - game.player.visionRadius; x <= game.player.position.x+game.player.visionRadius; x++ {
 		for y := game.player.position.y - game.player.visionRadius; y <= game.player.position.y+game.player.visionRadius; y++ {
 			coord := Coordinate{x, y}
-			w, h := screen.Size()
 
 			// Get the viewport coordinates
-			contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-			contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+			contentViewportX := playerViewportCoord.x + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
+			contentViewportY := playerViewportCoord.y + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+			contentViewportCoord := Coordinate{contentViewportX, contentViewportY}
 
 			if border, isBorder := game.world.borders[coord]; isBorder {
 				switch border {
@@ -67,50 +71,47 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(contentViewportX, contentViewportY, symbols[content.key].char, nil, symbols[content.key].style)
+					game.DrawContent(screen, content.key, contentViewportCoord, playerViewportCoord)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStump].char, nil, symbols[KeyTreeStump].style)
+						game.DrawContent(screen, KeyTreeStump, contentViewportCoord, playerViewportCoord)
 					case TreeStateTrunk:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, playerViewportCoord)
 					case TreeStateStumpling:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStumpling].char, nil, symbols[KeyTreeStumpling].style)
+						game.DrawContent(screen, KeyTreeStumpling, contentViewportCoord, playerViewportCoord)
 					case TreeStateSapling:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSapling].char, nil, symbols[KeyTreeSapling].style)
+						game.DrawContent(screen, KeyTreeSapling, contentViewportCoord, playerViewportCoord)
 					case TreeStateSeed:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSeed].char, nil, symbols[KeyTreeSeed].style)
+						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, playerViewportCoord)
 					case TreeStateAdult:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
-						screen.SetContent(contentViewportX-1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
-						screen.SetContent(contentViewportX, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
-						screen.SetContent(contentViewportX+1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x - 1, contentViewportCoord.y - 1}, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x, contentViewportCoord.y - 1}, playerViewportCoord)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x + 1, contentViewportCoord.y - 1}, playerViewportCoord)
 					}
 				}
 			}
+
+			if coord == game.squirrel.position {
+				game.DrawContent(screen, KeySquirrel, contentViewportCoord, playerViewportCoord)
+			}
 		}
 	}
-
-	game.DrawSquirrel(screen)
-	game.DrawPlayer(screen)
 }
 
 func (game *Game) DrawPlayer(screen tcell.Screen) {
 	w, h := screen.Size()
-	playerX, playerY := w/2, h/2 // Save player position to these variables. Previous implementation caused variables to be changed multiple times.
-	// TODO implement functionality to allow other runes than tree canopies to be drawn instead of the player.
-	// Currently only draws tree canopies above player.
-	cellRune, _, _, _ := screen.GetContent(playerX, playerY) // Only get the rune from the screen, other return values are not needed.
-	if cellRune != symbols[KeyTreeLeaves].char {
-		screen.SetContent(playerX, playerY, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
-	}
+	playerX, playerY := w/2, h/2                                                                // Save player position to these variables. Previous implementation caused variables to be changed multiple times.
+	screen.SetContent(playerX, playerY, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
 }
 
-func (game *Game) DrawSquirrel(screen tcell.Screen) {
-	w, h := screen.Size()
-	screen.SetContent(w/2+game.squirrel.position.x-game.player.position.x, h/2+game.squirrel.position.y-game.player.position.y, symbols[KeySquirrel].char, nil, symbols[KeySquirrel].style)
-
+func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, playerCoord Coordinate) {
+	symbol := symbols[key]
+	if coord != playerCoord || symbol.aboveActor {
+		screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+	}
 }
 
 func (game *Game) DrawMenu(screen tcell.Screen) {

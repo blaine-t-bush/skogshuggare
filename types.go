@@ -48,8 +48,9 @@ type Menu struct {
 }
 
 type Symbol struct {
-	char  rune
-	style tcell.Style
+	char       rune
+	aboveActor bool
+	style      tcell.Style
 }
 
 type GrowthInfo struct {

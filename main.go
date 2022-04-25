@@ -26,7 +26,7 @@ func main() {
 
 	// Attempt to get vision radius from command line args.
 	var visionRadius int
-	if len(os.Args[2:]) >= 1 {
+	if len(os.Args[1:]) >= 2 {
 		visionRadius, _ = strconv.Atoi(os.Args[2])
 	} else {
 		// Couldn't parse map name from command line. Using default map.

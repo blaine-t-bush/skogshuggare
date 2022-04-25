@@ -77,19 +77,19 @@ var (
 	}
 
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
-		KeyPlayer:        {char: '@', style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
-		KeySquirrel:      {char: 's', style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
-		KeyWall:          {char: '#', style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
-		KeyTreeSeed:      {char: '.', style: tcell.StyleDefault.Foreground(tcell.ColorKhaki)},
-		KeyTreeSapling:   {char: '┃', style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
-		KeyTreeTrunk:     {char: '█', style: tcell.StyleDefault.Foreground(tcell.ColorSaddleBrown)},
-		KeyTreeLeaves:    {char: '▓', style: tcell.StyleDefault.Foreground(tcell.ColorForestGreen)},
-		KeyTreeStump:     {char: '▄', style: tcell.StyleDefault.Foreground(tcell.ColorSaddleBrown)},
-		KeyTreeStumpling: {char: '╻', style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
-		KeyGrassLight:    {char: '\'', style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
-		KeyGrassHeavy:    {char: '"', style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
-		KeyWaterLight:    {char: ' ', style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
-		KeyWaterHeavy:    {char: '~', style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
+		KeyPlayer:        {char: '@', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
+		KeySquirrel:      {char: 's', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
+		KeyWall:          {char: '#', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
+		KeyTreeSeed:      {char: '.', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorKhaki)},
+		KeyTreeSapling:   {char: '┃', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
+		KeyTreeTrunk:     {char: '█', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSaddleBrown)},
+		KeyTreeLeaves:    {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorForestGreen)},
+		KeyTreeStump:     {char: '▄', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSaddleBrown)},
+		KeyTreeStumpling: {char: '╻', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
+		KeyGrassLight:    {char: '\'', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		KeyGrassHeavy:    {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		KeyWaterLight:    {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
+		KeyWaterHeavy:    {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
 	}
 )
 
