@@ -151,7 +151,7 @@ func SelectNextNode(graph map[Coordinate]*Node) *Node {
 	return nextNode
 }
 
-func (game *Game) FindNextCoordinate(start Coordinate, end Coordinate) Coordinate {
+func (game *Game) FindPath(start Coordinate, end Coordinate) map[int]Coordinate {
 	// Create a map of all coordinates.
 	// We set the distance to all other nodes to "inf", except the distance
 	// to the start node which we set at 0.
@@ -206,21 +206,43 @@ func (game *Game) FindNextCoordinate(start Coordinate, end Coordinate) Coordinat
 	}
 
 	pathNode := graph[end]
+	path := make(map[int]Coordinate)
 	if pathNode.distance == Infinity {
 		// Was unable to find a path.
-		return start
+		path[1] = start
+		return path
 	}
-	for {
+
+	for i := pathNode.distance; i > 0; i-- {
+		path[i] = pathNode.position
 		if pathNode.parent == start {
-			return pathNode.position // If success, return the coordinate of first step in optimal path.
+			break
+		} else {
+			pathNode = graph[pathNode.parent]
 		}
-		pathNode = graph[pathNode.parent]
 	}
+
+	return path
 }
 
-func (game *Game) FindNextDirection(start Coordinate, end Coordinate) int {
-	next := game.FindNextCoordinate(start, end)
+func (game *Game) FindNextDirection(squirrelKey int) int {
+	// Loop through current path and check if any are blocked. If not, move to next coord in path.
+	// Otherwise, run pathfinding again.
+	squirrel := game.squirrels[squirrelKey]
+	findNewPath := false
+	for _, coord := range squirrel.path {
+		if game.IsBlocked(coord) {
+			findNewPath = true
+			break
+		}
+	}
 
+	if findNewPath {
+		squirrel.path = game.FindPath(squirrel.position, squirrel.destination)
+	}
+
+	start := squirrel.position
+	next := squirrel.path[1]
 	if start.x != next.x && start.y != next.y {
 		panic("FindNextDirection: Next target coordinate is not adjacent to current coordinate!")
 	}
@@ -245,4 +267,16 @@ func (game *Game) FindNextDirection(start Coordinate, end Coordinate) int {
 	}
 
 	return dir
+}
+
+func (game *Game) UpdatePath(squirrelKey int) {
+	squirrel := game.squirrels[squirrelKey]
+	newPath := make(map[int]Coordinate)
+	for key, coord := range squirrel.path {
+		if key != 1 {
+			newPath[key-1] = coord
+		}
+	}
+
+	squirrel.path = newPath
 }

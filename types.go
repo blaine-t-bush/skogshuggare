@@ -10,6 +10,7 @@ type Coordinate struct {
 type Actor struct {
 	position     Coordinate
 	destination  Coordinate
+	path         map[int]Coordinate
 	visionRadius int
 	score        int
 }

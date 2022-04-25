@@ -189,6 +189,7 @@ func (game *Game) Update(screen tcell.Screen) {
 	for key, squirrel := range game.squirrels {
 		if (Coordinate{0, 0} == squirrel.destination) || game.IsBlocked(squirrel.destination) {
 			squirrel.destination = game.GetRandomPlantableCoordinate()
+			squirrel.path = game.FindPath(squirrel.position, squirrel.destination)
 		}
 
 		// If squirrel is one move away from its destination, then it plants the seed at the destination,
@@ -200,7 +201,7 @@ func (game *Game) Update(screen tcell.Screen) {
 		} else {
 			var nextDirection int
 			for {
-				nextDirection = game.FindNextDirection(squirrel.position, squirrel.destination)
+				nextDirection = game.FindNextDirection(key)
 				if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
 					squirrel.destination = game.GetRandomPlantableCoordinate()
 				} else {
@@ -208,6 +209,7 @@ func (game *Game) Update(screen tcell.Screen) {
 				}
 			}
 			game.MoveSquirrel(screen, 1, nextDirection, key)
+			game.UpdatePath(key)
 		}
 	}
 
