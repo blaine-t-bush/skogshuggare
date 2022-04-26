@@ -18,7 +18,7 @@ func main() {
 	// Attempt to get map name from command line args.
 	var mapName string
 	var visionRadius int
-	if len(os.Args) <= 1 {
+	if len(os.Args) <= 1 { // Make sure there are arguments before accesing slices
 		mapName = "skog"
 		visionRadius = 20
 	} else {
@@ -87,7 +87,7 @@ func main() {
 	screen.Fini()
 }
 
-func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) {
+func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) { // TODO make sure variables are not changed at the same time w/ mutex or channels
 	defer wg.Done()
 
 	// Initialize game menu update ticker.
