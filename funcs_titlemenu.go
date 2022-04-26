@@ -22,28 +22,29 @@ func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
 	pageItems := currentPage.titleMenuItems
 
 	currentY := strings.Count(pageContent[0], "\n")
-	/*currentAnimation := pageContent[currentPage.animationState]
+	widthScreen, _ := screen.Size()
+	//centerX := widthScreen / 2
+	currentAnimation := pageContent[currentPage.animationState]
 
 	for x := 0; x < len(currentAnimation); x++ {
-		screen.SetContent(x, 0, rune(currentAnimation[x]), nil, tcell.StyleDefault)
+		centerX := (widthScreen / 2) - (len(currentAnimation) / 2)
+		screen.SetContent(x+centerX, 0, rune(currentAnimation[x]), nil, tcell.StyleDefault) // coords to center: (x + centerX, 0)
 	}
 
 	if currentPage.animationState >= len(currentPage.content)-1 {
 		currentPage.animationState = 0
 	} else {
 		currentPage.animationState++ // Increment animation state after drawing it
-	}*/
+	}
 
-	startItemPositionX := 5
 	for i := 0; i < len(pageItems); i++ { // This ensures order
 		pageItem := pageItems[i]
-
+		centerX := (widthScreen / 2) - (len(pageItem.text))
 		if i == currentPage.cursorState {
-			screen.SetContent(startItemPositionX-1, currentY, '>', nil, tcell.StyleDefault)
+			screen.SetContent(centerX-1, currentY, '>', nil, tcell.StyleDefault)
 		}
 		for i, c := range pageItem.text {
-			posX := startItemPositionX + i
-			screen.SetContent(posX, currentY, c, nil, tcell.StyleDefault)
+			screen.SetContent(i+centerX, currentY, c, nil, tcell.StyleDefault)
 		}
 		currentY++
 	}
@@ -55,6 +56,9 @@ func (titleMenu *TitleMenu) Update(screen tcell.Screen) {
 
 func (titleMenu *TitleMenu) InputHandler(screen tcell.Screen) {
 	for {
+		if titleMenu.exit {
+			return
+		}
 		ev := screen.PollEvent()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
@@ -103,13 +107,14 @@ func (titleMenu *TitleMenu) DrawAnimation(screen tcell.Screen) {
 func (titleMenu *TitleMenu) MoveMenuCursor(dir int) {
 	// Change the current page cursor state
 	cursorState := &titleMenu.titleMenuPages[titleMenu.pageState].cursorState
+	numMenuItems := len(titleMenu.titleMenuPages[titleMenu.pageState].titleMenuItems)
 	switch dir {
 	case DirUp:
 		if *cursorState > 0 {
 			*cursorState--
 		}
 	case DirDown:
-		if *cursorState < 2 {
+		if *cursorState < numMenuItems-1 {
 			*cursorState++
 		}
 	}
@@ -122,6 +127,13 @@ func (titleMenu *TitleMenu) HandleEnterEvent() {
 	switch pageItems[pageCursorState].text {
 	case "Exit":
 		os.Exit(0)
+	case "New game":
+		titleMenu.pageState = NewGamePageOrder
+	default:
+		if pageItems[pageCursorState].value != nil {
+			titleMenu.selectedMap = pageItems[pageCursorState].value.(string)
+			titleMenu.exit = true
+		}
 	}
 }
 
@@ -151,7 +163,7 @@ func GenerateTitleMenu() TitleMenu {
 		GenerateNewGameMapList(),
 	}
 
-	tm := TitleMenu{0, MainMenuPageOrder, map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage}, false}
+	tm := TitleMenu{0, MainMenuPageOrder, map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage}, "", false}
 	return tm
 }
 

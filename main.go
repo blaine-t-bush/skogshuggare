@@ -19,14 +19,14 @@ func main() {
 	var mapName string
 	var visionRadius int
 	if len(os.Args) <= 1 { // Make sure there are arguments before accesing slices
-		mapName = "skog"
+		mapName = "skog.karta"
 		visionRadius = 20
 	} else {
 		if len(os.Args[1:]) >= 1 {
-			mapName = os.Args[1]
+			mapName = os.Args[1] + ".karta"
 		} else {
 			// Couldn't parse map name from command line. Using default map.
-			mapName = "skog"
+			mapName = "skog.karta"
 		}
 
 		// Attempt to get vision radius from command line args.
@@ -65,8 +65,11 @@ func main() {
 	go TitleMenuHandler(&twg, screen, &titleMenu)
 	twg.Wait()
 
+	if len(titleMenu.selectedMap) > 0 {
+		mapName = titleMenu.selectedMap
+	}
 	// Read map to initialize game state.
-	worldContent, playerPosition, squirrelPosition := ReadMap("kartor/" + mapName + ".karta")
+	worldContent, playerPosition, squirrelPosition := ReadMap("kartor/" + mapName)
 	game := Game{
 		player:   Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
 		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
@@ -96,8 +99,8 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 	// Start the input handler
 	go titleMenu.InputHandler(screen)
 	// Start title menu animation
-	// Does not work
-	go titleMenu.DrawAnimation(screen)
+	// Does not work, disable for now
+	// go titleMenu.DrawAnimation(screen)
 	for range ticker.C {
 		titleMenu.Update(screen)
 		titleMenu.Draw(screen)

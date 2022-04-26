@@ -61,6 +61,7 @@ type TitleMenu struct {
 	cursorState    int
 	pageState      int
 	titleMenuPages map[int]*TitleMenuPage
+	selectedMap    string
 	exit           bool
 }
 
