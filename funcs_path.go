@@ -32,6 +32,24 @@ func (game *Game) IsBlocked(coordinate Coordinate) bool {
 	return false
 }
 
+// Returns true if coordinate contains a collidable object, or a tree, or fire.
+func (game *Game) IsPathBlocked(coordinate Coordinate) bool {
+	if content, exists := game.world.content[coordinate]; exists {
+		switch content := content.(type) {
+		case Object:
+			if content.collidable {
+				return true
+			}
+		case *Fire:
+			return true
+		case *Tree:
+			return true
+		}
+	}
+
+	return false
+}
+
 // Returns true if coordinate contains a collidable or non-plantable object, or a tree.
 func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
@@ -48,30 +66,16 @@ func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 	return false
 }
 
-// Returns true if coordinate contains an actor.
-func (game *Game) IsOccupied(coordinate Coordinate) bool {
-	if game.player.position == coordinate {
-		return true
-	}
-
-	for _, squirrel := range game.squirrels {
-		if squirrel.position == coordinate {
-			return true
-		}
-	}
-
-	return false
-}
-
-// Returns true if coordinate contains a collidable non-actor, or an actor.
-func (game *Game) IsBlockedOrOccupied(coordinate Coordinate) bool {
-	return game.IsBlocked(coordinate) || game.IsOccupied(coordinate)
-}
-
 func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+	iterations := 0
 	for {
-		if game.IsBlocked(coordinate) {
+		if iterations >= MaxIterations {
+			panic("Reached max iterations in GetRandomAvailableCoordinate()")
+		}
+		iterations++
+
+		if game.IsPathBlocked(coordinate) {
 			coordinate = Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 		} else {
 			break
@@ -83,7 +87,13 @@ func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 
 func (game *Game) GetRandomPlantableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+	iterations := 0
 	for {
+		if iterations >= MaxIterations {
+			panic("Reached max iterations in GetRandomAvailableCoordinate()")
+		}
+		iterations++
+
 		if game.IsUnplantable(coordinate) {
 			coordinate = Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 		} else {
@@ -159,7 +169,7 @@ func (game *Game) FindPath(start Coordinate, end Coordinate) map[int]Coordinate 
 	for c := 0; c < game.world.width; c++ {
 		for r := 0; r < game.world.height; r++ {
 			// Only add non-collidable points, since actors cannot move throgh blocked points.
-			if !game.IsBlocked(Coordinate{c, r}) {
+			if !game.IsPathBlocked(Coordinate{c, r}) {
 				graph[Coordinate{c, r}] = &Node{position: Coordinate{c, r}, distance: Infinity, visited: false}
 			}
 		}
@@ -175,7 +185,6 @@ func (game *Game) FindPath(start Coordinate, end Coordinate) map[int]Coordinate 
 	graph[start].distance = 0
 	var currentNode *Node
 	iterations := 0
-	maxIterations := 1000
 	// Now begin the algorithm:
 	// While there are unvisited nodes left in the graph,
 	// select an unknown node currentNode with the loewst distance.
@@ -184,13 +193,17 @@ func (game *Game) FindPath(start Coordinate, end Coordinate) map[int]Coordinate 
 	// Continue until there are no unvisited nodes left in the graph, or until max iterations is reached.
 
 	for {
+		if iterations >= MaxIterations {
+			panic("Reached max iterations in FindPath()")
+		}
+		iterations++
+
 		// Select an unvisited node with the lowest distance.
 		// If there are no more unvisited nodes, or we reach the maximum number of iterations, we're done.
 		currentNode = SelectNextNode(graph)
-		if currentNode == nil || iterations >= maxIterations {
+		if currentNode == nil {
 			break
 		}
-		iterations++
 		currentNode.visited = true
 
 		// For each node neighboring currentNode,
@@ -205,21 +218,30 @@ func (game *Game) FindPath(start Coordinate, end Coordinate) map[int]Coordinate 
 		}
 	}
 
-	pathNode := graph[end]
+	// Create map where key is an int representing the path order (e.g. key = 1 is first step, key = 2 is second step)
+	// and value is the target coordinate (e.g. value for key = 1 is the coordinate for first step in path).
+	pathNode, exists := graph[end]
 	path := make(map[int]Coordinate)
-	if pathNode.distance == Infinity {
+	if !exists || pathNode.distance == Infinity {
 		// Was unable to find a path.
 		path[1] = start
 		return path
 	}
 
-	for i := pathNode.distance; i > 0; i-- {
-		path[i] = pathNode.position
+	stepCount := 1
+	for {
 		if pathNode.parent == start {
 			break
 		} else {
 			pathNode = graph[pathNode.parent]
 		}
+		stepCount++
+	}
+
+	pathNode = graph[end]
+	for i := stepCount; i > 0; i-- {
+		path[i] = pathNode.position
+		pathNode = graph[pathNode.parent]
 	}
 
 	return path
@@ -231,7 +253,7 @@ func (game *Game) FindNextDirection(squirrelKey int) int {
 	squirrel := game.squirrels[squirrelKey]
 	findNewPath := false
 	for _, coord := range squirrel.path {
-		if game.IsBlocked(coord) {
+		if game.IsPathBlocked(coord) {
 			findNewPath = true
 			break
 		}
@@ -243,10 +265,6 @@ func (game *Game) FindNextDirection(squirrelKey int) int {
 
 	start := squirrel.position
 	next := squirrel.path[1]
-	if start.x != next.x && start.y != next.y {
-		panic("FindNextDirection: Next target coordinate is not adjacent to current coordinate!")
-	}
-
 	var dir int
 	if start.y > next.y {
 		dir = DirUp

@@ -30,7 +30,7 @@ func main() {
 		visionRadius, _ = strconv.Atoi(os.Args[2])
 	} else {
 		// Couldn't parse map name from command line. Using default map.
-		visionRadius = 20
+		visionRadius = 100
 	}
 
 	// Read map to initialize game state.
@@ -196,8 +196,9 @@ func (game *Game) Update(screen tcell.Screen) {
 
 	// Give the squirrel a destination if it doesn't alreasdy have one,
 	// or update its destination if it's blocked.
+	// FIXME determine why squirrels sometimes stop even when there seem to be nearby available plantable coordinates
 	for key, squirrel := range game.squirrels {
-		if (Coordinate{0, 0} == squirrel.destination) || game.IsBlocked(squirrel.destination) {
+		if (Coordinate{0, 0} == squirrel.destination) || game.IsPathBlocked(squirrel.destination) {
 			squirrel.destination = game.GetRandomPlantableCoordinate()
 			squirrel.path = game.FindPath(squirrel.position, squirrel.destination)
 		}
@@ -205,18 +206,13 @@ func (game *Game) Update(screen tcell.Screen) {
 		// If squirrel is one move away from its destination, then it plants the seed at the destination,
 		// i.e. one tile away, and then picks a new destination.
 		// Otherwise, it just moves towards its current destination.
-		if squirrel.IsAdjacentToDestination() {
+		if squirrel.IsAdjacentToDestination() && !game.IsPathBlocked(squirrel.destination) {
 			game.PlantSeed(squirrel.destination)
 			squirrel.destination = game.GetRandomPlantableCoordinate()
 		} else {
-			var nextDirection int
-			for {
-				nextDirection = game.FindNextDirection(key)
-				if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
-					squirrel.destination = game.GetRandomPlantableCoordinate()
-				} else {
-					break
-				}
+			nextDirection := game.FindNextDirection(key)
+			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
+				squirrel.destination = game.GetRandomPlantableCoordinate()
 			}
 			game.MoveSquirrel(screen, 1, nextDirection, key)
 			game.UpdatePath(key)

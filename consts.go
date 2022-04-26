@@ -4,7 +4,8 @@ import "github.com/gdamore/tcell"
 
 const (
 	// Game parameters
-	TickRate = 30 // Milliseconds between ticks
+	TickRate      = 30 // Milliseconds between ticks
+	MaxIterations = 1000
 	// Map characters
 	MapPlayer     = 'p'
 	MapSquirrel   = 's'
@@ -16,11 +17,12 @@ const (
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
 	FireSpreadChance    = 0.100 // Chance per update for each fire to spread to a random adjacent tile
-	FireBurnoutHalflife = 200   // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
-	// Hit points
+	FireBurnoutHalflife = 2000  // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
+	// Fire and hitpoints
 	MaxHitPointsPlayer   = 3
 	MaxHitPointsSquirrel = 1
 	DamageFire           = 1
+	FireWeightedDistance = 20
 	// Actors
 	ActorPlayer = iota
 	ActorSquirrel

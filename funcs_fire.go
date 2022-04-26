@@ -19,7 +19,7 @@ func (game *Game) UpdateFire() int {
 			// Check for burnout
 			if rand.Float64() <= BurnoutChance(content.age) {
 				delete(game.world.content, position)
-				game.world.content[position] = Object{KeyBurnt, false, false, false}
+				game.world.content[position] = Object{KeyBurnt, false, false, true}
 			}
 
 			// Check for spreading
