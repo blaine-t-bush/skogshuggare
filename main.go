@@ -33,16 +33,6 @@ func main() {
 		visionRadius = 20
 	}
 
-	// Read map to initialize game state.
-	worldContent, playerPosition, squirrelPosition := readMap("kartor/" + mapName + ".karta")
-	game := Game{
-		player:   Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
-		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
-		world:    worldContent,
-		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
-		exit:     false,
-	}
-
 	// Seed randomizer.
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -61,6 +51,23 @@ func main() {
 	screen.SetStyle(tcell.StyleDefault)
 	screen.Clear()
 
+	// Draw and handle menu inputs before initializing and drawing the game itself
+	titleMenu := GenerateTitleMenu() // Generate title menu
+	var twg sync.WaitGroup
+	twg.Add(1)
+	go TitleMenuHandler(&twg, screen, &titleMenu)
+	twg.Wait()
+
+	// Read map to initialize game state.
+	worldContent, playerPosition, squirrelPosition := ReadMap("kartor/" + mapName + ".karta")
+	game := Game{
+		player:   Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
+		squirrel: Actor{position: squirrelPosition, visionRadius: 100, score: 0},
+		world:    worldContent,
+		menu:     Menu{15, 5, Coordinate{0, 0}, []string{}},
+		exit:     false,
+	}
+
 	// Randomly seed map with trees in various states.
 	game.PopulateTrees(screen)
 	game.PopulateGrass(screen)
@@ -73,7 +80,27 @@ func main() {
 	screen.Fini()
 }
 
-func readMap(fileName string) (World, Coordinate, Coordinate) {
+func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) {
+	defer wg.Done()
+
+	// Initialize game menu update ticker.
+	ticker := time.NewTicker(TickRate * time.Millisecond)
+
+	// Start the input handler
+	go titleMenu.InputHandler(screen)
+
+	for range ticker.C {
+		titleMenu.Update(screen)
+		titleMenu.Draw(screen)
+		fmt.Println("Ticked...")
+		if titleMenu.exit {
+			screen.Clear()
+			return
+		}
+	}
+}
+
+func ReadMap(fileName string) (World, Coordinate, Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
 	worldContent := make(map[Coordinate]interface{})
 

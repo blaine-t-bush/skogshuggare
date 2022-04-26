@@ -29,7 +29,7 @@ type World struct {
 	width   int
 	height  int
 	borders map[Coordinate]int // Store the borders in a lookup-table instead of running checks every single loop
-	content map[Coordinate]interface{}
+	content map[Coordinate]any
 }
 
 type Game struct {
@@ -55,4 +55,24 @@ type Symbol struct {
 type GrowthInfo struct {
 	newState int
 	chance   float64
+}
+
+type TitleMenu struct {
+	cursorState    int
+	pageState      int
+	titleMenuPages map[int]TitleMenuPage
+	exit           bool
+}
+
+type TitleMenuItem struct {
+	order int
+	text  string
+	value interface{}
+}
+
+type TitleMenuPage struct {
+	name           int
+	content        string
+	cursorState    int
+	titleMenuItems map[int]TitleMenuItem
 }

@@ -59,6 +59,10 @@ const (
 	TopRightCorner
 	BottomRightCorner
 	BottomLeftCorner
+	// Title menu states
+	MainMenuPageOrder
+	NewGamePageOrder
+	// DifficultyPageOrder
 )
 
 var (
@@ -95,3 +99,15 @@ var (
 
 // NOTE
 // Interesting Unicode characters (e.g. arrows) start at 2190.
+
+//
+
+const TitleMenuHeader = `
+  ####   #  #   ######  #######    ####  #   #  #    #  #######  #######    ###    ###   ######
+ #       # #    #    #  #         #      #   #  #    #  #        #         #   #   #  #  #
+ ####    ##     #    #  #  ####   ####   #####  #    #  #  ####  #  ####   #####   # ##  ###
+    #    # #    #    #  #     #      #   #   #  #    #  #     #  #     #  #     #  # #   #
+####     #  #   ######  #######  ####    #   #   ####   #######  #######  #     #  #  #  ######
+
+
+`
