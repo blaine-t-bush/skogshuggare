@@ -10,9 +10,15 @@ func BurnoutChance(t int) float64 {
 	return 1 - (1 / (1 + float64(t)/float64(FireBurnoutHalflife)))
 }
 
-func (game *Game) UpdateFire() int {
-	spreadCount := 0
+func (game *Game) SpawnRandomFire() {
+	coord := game.GetRandomFlammableCoordinate()
+	game.world.content[coord] = &Fire{coord, 0}
+}
 
+func (game *Game) UpdateFire() int {
+	spreadAndSpawnCount := 0
+
+	// Check for spreading and burning out of existing fire.
 	for position, content := range game.world.content {
 		switch content := content.(type) {
 		case *Fire:
@@ -51,7 +57,7 @@ func (game *Game) UpdateFire() int {
 				// Spread if not blocked
 				if spread {
 					game.world.content[spreadCoordinate] = &Fire{spreadCoordinate, 0}
-					spreadCount++
+					spreadAndSpawnCount++
 				}
 			}
 
@@ -60,7 +66,12 @@ func (game *Game) UpdateFire() int {
 		}
 	}
 
-	return spreadCount
+	// Check for spawning of new fires
+	if rand.Float64() <= FireSpawnChance {
+		game.SpawnRandomFire()
+	}
+
+	return spreadAndSpawnCount
 }
 
 func (game *Game) CheckFireDamage() int {

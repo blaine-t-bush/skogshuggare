@@ -66,6 +66,22 @@ func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 	return false
 }
 
+// Returns true if coordinate contains a collidable object, or fire.
+func (game *Game) IsUnflammable(coordinate Coordinate) bool {
+	if content, exists := game.world.content[coordinate]; exists {
+		switch content := content.(type) {
+		case Object:
+			if !content.flammable {
+				return true
+			}
+		case *Fire:
+			return true
+		}
+	}
+
+	return false
+}
+
 func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 	iterations := 0
@@ -85,12 +101,31 @@ func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 	return coordinate
 }
 
+func (game *Game) GetRandomFlammableCoordinate() Coordinate {
+	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+	iterations := 0
+	for {
+		if iterations >= MaxIterations {
+			panic("Reached max iterations in GetRandomFlammableCoordinate()")
+		}
+		iterations++
+
+		if game.IsUnflammable(coordinate) {
+			coordinate = Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
+		} else {
+			break
+		}
+	}
+
+	return coordinate
+}
+
 func (game *Game) GetRandomPlantableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 	iterations := 0
 	for {
 		if iterations >= MaxIterations {
-			panic("Reached max iterations in GetRandomAvailableCoordinate()")
+			panic("Reached max iterations in GetRandomPlantableCoordinate()")
 		}
 		iterations++
 
