@@ -95,7 +95,9 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 
 	// Start the input handler
 	go titleMenu.InputHandler(screen)
-
+	// Start title menu animation
+	// Does not work
+	go titleMenu.DrawAnimation(screen)
 	for range ticker.C {
 		titleMenu.Update(screen)
 		titleMenu.Draw(screen)
