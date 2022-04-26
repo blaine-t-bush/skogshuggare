@@ -79,31 +79,6 @@ func (titleMenu *TitleMenu) InputHandler(screen tcell.Screen) {
 	}
 }
 
-func (titleMenu *TitleMenu) DrawAnimation(screen tcell.Screen) {
-	for {
-		currentPage, found := titleMenu.titleMenuPages[titleMenu.pageState]
-		if !found {
-			currentPage = titleMenu.titleMenuPages[MainMenuPageOrder]
-		}
-
-		pageContent := currentPage.content
-		currentAnimation := pageContent[currentPage.animationState]
-		for x := 0; x < len(currentAnimation); x++ {
-			screen.SetContent(x, 0, rune(currentAnimation[x]), nil, tcell.StyleDefault)
-		}
-
-		if currentPage.animationState >= len(currentPage.content)-1 {
-			currentPage.animationState = 0
-		} else {
-			currentPage.animationState++ // Increment animation state after drawing it
-		}
-
-		if titleMenu.exit {
-			return
-		}
-	}
-}
-
 func (titleMenu *TitleMenu) MoveMenuCursor(dir int) {
 	// Change the current page cursor state
 	cursorState := &titleMenu.titleMenuPages[titleMenu.pageState].cursorState
@@ -112,10 +87,14 @@ func (titleMenu *TitleMenu) MoveMenuCursor(dir int) {
 	case DirUp:
 		if *cursorState > 0 {
 			*cursorState--
+		} else {
+			*cursorState = numMenuItems - 1
 		}
 	case DirDown:
 		if *cursorState < numMenuItems-1 {
 			*cursorState++
+		} else {
+			*cursorState = 0
 		}
 	}
 }
@@ -129,6 +108,8 @@ func (titleMenu *TitleMenu) HandleEnterEvent() {
 		os.Exit(0)
 	case "New game":
 		titleMenu.pageState = NewGamePageOrder
+	case "Go back":
+		titleMenu.pageState = MainMenuPageOrder
 	default:
 		if pageItems[pageCursorState].value != nil {
 			titleMenu.selectedMap = pageItems[pageCursorState].value.(string)
@@ -142,7 +123,8 @@ func GenerateTitleMenu() TitleMenu {
 	loadGamePageItem := TitleMenuItem{1, "Load game", nil}
 	exitGameItem := TitleMenuItem{2, "Exit", nil}
 
-	titleHeaderAnimation := []string{TitleMenuHeaderAnim1, TitleMenuHeaderAnim2, TitleMenuHeaderAnim3, TitleMenuHeaderAnim4, TitleMenuHeaderAnim5, TitleMenuHeaderAnim6}
+	titleHeaderAnimation := []string{TitleMenuHeaderAnim1, TitleMenuHeaderAnim2, TitleMenuHeaderAnim3, TitleMenuHeaderAnim4, TitleMenuHeaderAnim5, TitleMenuHeaderAnim6,
+		TitleMenuHeaderAnim7, TitleMenuHeaderAnim8, TitleMenuHeaderAnim9, TitleMenuHeaderAnim10, TitleMenuHeaderAnim11, TitleMenuHeaderAnim12}
 	mainMenu := TitleMenuPage{
 		MainMenuPageOrder,
 		titleHeaderAnimation,
@@ -176,13 +158,21 @@ func GenerateNewGameMapList() map[int]TitleMenuItem {
 		return nil
 	}
 
+	maxI := 0
+
 	for i, file := range files {
 		titleMenuItems[i] = TitleMenuItem{
 			i,
 			file.Name(),
 			file.Name(),
 		}
+		maxI++
+	}
 
+	titleMenuItems[maxI] = TitleMenuItem{
+		maxI,
+		"Go back",
+		nil,
 	}
 
 	return titleMenuItems
