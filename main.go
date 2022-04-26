@@ -72,9 +72,11 @@ func main() {
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Ticker(&wg, screen, game)
+	go Ticker(&wg, screen, &game)
 	wg.Wait()
 	screen.Fini()
+
+	fmt.Println("Game over. Final score:", game.player.score)
 }
 
 func readMap(fileName string) (World, Coordinate, []Coordinate) {
@@ -133,10 +135,7 @@ func readMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
-	// Wait for this goroutine to finish before resuming main().
-	defer wg.Done()
-
+func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game *Game) {
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
@@ -145,6 +144,7 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 		game.Update(screen)
 		game.Draw(screen)
 		if game.exit {
+			wg.Done()
 			return
 		}
 	}

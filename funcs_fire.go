@@ -54,7 +54,10 @@ func (game *Game) CheckFireDamage() int {
 		case Object:
 			if content.category == ContentCategoryFire {
 				// Damage player
-				newHitPoints := game.player.hitPointsCurrent - DamageFire // FIXME check if player HP reached 0
+				newHitPoints := game.player.hitPointsCurrent - DamageFire
+				if newHitPoints <= 0 {
+					game.exit = true
+				}
 				game.player.hitPointsCurrent = newHitPoints
 				damage++
 			}
