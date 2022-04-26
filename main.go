@@ -173,8 +173,8 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
-		game.Update(screen)
 		game.Draw(screen)
+		game.Update(screen)
 		if game.exit {
 			return
 		}
