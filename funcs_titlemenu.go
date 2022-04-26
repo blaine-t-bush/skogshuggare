@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell"
 )
@@ -23,18 +24,11 @@ func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
 
 	currentY := strings.Count(pageContent[0], "\n")
 	widthScreen, _ := screen.Size()
-	//centerX := widthScreen / 2
 	currentAnimation := pageContent[currentPage.animationState]
 
 	for x := 0; x < len(currentAnimation); x++ {
 		centerX := (widthScreen / 2) - (len(currentAnimation) / 2)
 		screen.SetContent(x+centerX, 0, rune(currentAnimation[x]), nil, tcell.StyleDefault) // coords to center: (x + centerX, 0)
-	}
-
-	if currentPage.animationState >= len(currentPage.content)-1 {
-		currentPage.animationState = 0
-	} else {
-		currentPage.animationState++ // Increment animation state after drawing it
 	}
 
 	for i := 0; i < len(pageItems); i++ { // This ensures order
@@ -48,6 +42,26 @@ func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
 		}
 		currentY++
 	}
+}
+
+func (titleMenu *TitleMenu) AnimationHandler() {
+	for {
+		if titleMenu.exit {
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
+		currentPage, found := titleMenu.titleMenuPages[titleMenu.pageState]
+		if !found {
+			currentPage = titleMenu.titleMenuPages[MainMenuPageOrder]
+		}
+
+		if currentPage.animationState >= len(currentPage.content)-1 {
+			currentPage.animationState = 0
+		} else {
+			currentPage.animationState++ // Increment animation state after drawing it
+		}
+	}
+
 }
 
 func (titleMenu *TitleMenu) Update(screen tcell.Screen) {
@@ -124,7 +138,7 @@ func GenerateTitleMenu() TitleMenu {
 	exitGameItem := TitleMenuItem{2, "Exit", nil}
 
 	titleHeaderAnimation := []string{TitleMenuHeaderAnim1, TitleMenuHeaderAnim2, TitleMenuHeaderAnim3, TitleMenuHeaderAnim4, TitleMenuHeaderAnim5, TitleMenuHeaderAnim6,
-		TitleMenuHeaderAnim7, TitleMenuHeaderAnim8, TitleMenuHeaderAnim9, TitleMenuHeaderAnim10, TitleMenuHeaderAnim11, TitleMenuHeaderAnim12}
+		TitleMenuHeaderAnim7, TitleMenuHeaderAnim8, TitleMenuHeaderAnim9, TitleMenuHeaderAnim10, TitleMenuHeaderAnim11, TitleMenuHeaderAnim12, TitleMenuHeaderAnim13}
 	mainMenu := TitleMenuPage{
 		MainMenuPageOrder,
 		titleHeaderAnimation,

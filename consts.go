@@ -101,7 +101,6 @@ var (
 // Interesting Unicode characters (e.g. arrows) start at 2190.
 
 // Title menu header
-
 const TitleMenuHeaderAnim1 = `SKOGSHUGGARE
 
 
@@ -147,6 +146,11 @@ const TitleMenuHeaderAnim11 = `SKOGSHUGGaRE
 
 `
 const TitleMenuHeaderAnim12 = `SKOGSHUGGArE
+
+
+`
+
+const TitleMenuHeaderAnim13 = `SKOGSHUGGARe
 
 
 `
