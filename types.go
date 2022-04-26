@@ -22,6 +22,7 @@ type Tree struct {
 
 type Object struct {
 	key        int
+	category   int
 	collidable bool // Are actors blocked
 	plantable  bool // Can seeds be planted here
 }

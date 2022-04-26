@@ -44,7 +44,7 @@ func (game *Game) PopulateGrass(screen tcell.Screen) int {
 	for i := 0; i < maxGrassCount; i++ {
 		key := keys[rand.Intn(len(keys))]
 		coordinate := game.GetRandomPlantableCoordinate()
-		game.world.content[coordinate] = Object{key, false, false}
+		game.world.content[coordinate] = Object{key, ContentCategoryDecoration, false, false}
 		grassCount++
 	}
 
