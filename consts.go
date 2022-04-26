@@ -18,6 +18,10 @@ const (
 	SeedCreationChance  = 0.005 // Seed spawning
 	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
 	FireSpreadChance    = 0.020
+	// Hit points
+	MaxHitPointsPlayer   = 3
+	MaxHitPointsSquirrel = 1
+	DamageFire           = 1
 	// Actors
 	ActorPlayer = iota
 	ActorSquirrel

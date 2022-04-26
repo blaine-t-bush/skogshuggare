@@ -9,8 +9,7 @@ func (game *Game) SpreadFire() int {
 		switch content := content.(type) {
 		case Object:
 			if content.category == ContentCategoryFire && rand.Float64() <= FireSpreadChance {
-				// Pick random direction without fire
-				game.AppendToMenuMessages("spread")
+				// Pick random direction
 				spreadCoordinate := position
 				switch GetRandomDirection() {
 				case DirUp:
@@ -34,6 +33,7 @@ func (game *Game) SpreadFire() int {
 					}
 				}
 
+				// Spread if not blocked
 				if spread {
 					game.world.content[spreadCoordinate] = Object{KeyFire, ContentCategoryFire, false, false}
 					spreadCount++
@@ -43,4 +43,43 @@ func (game *Game) SpreadFire() int {
 	}
 
 	return spreadCount
+}
+
+func (game *Game) CheckFireDamage() int {
+	damage := 0
+
+	// Check if fire exists on player tile
+	if content, exists := game.world.content[game.player.position]; exists {
+		switch content := content.(type) {
+		case Object:
+			if content.category == ContentCategoryFire {
+				// Damage player
+				newHitPoints := game.player.hitPointsCurrent - DamageFire // FIXME check if player HP reached 0
+				game.player.hitPointsCurrent = newHitPoints
+				damage++
+			}
+		}
+	}
+
+	// Check if fire exists on squirrel tiles
+	for key, squirrel := range game.squirrels {
+		if content, exists := game.world.content[squirrel.position]; exists {
+			switch content := content.(type) {
+			case Object:
+				if content.category == ContentCategoryFire {
+					// Damage squirrel
+					newHitPoints := squirrel.hitPointsCurrent - DamageFire
+					if newHitPoints <= 0 {
+						// Delete squirrel
+						delete(game.squirrels, key)
+					} else {
+						squirrel.hitPointsCurrent = newHitPoints
+					}
+					damage++
+				}
+			}
+		}
+	}
+
+	return damage
 }

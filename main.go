@@ -37,10 +37,10 @@ func main() {
 	worldContent, playerPosition, squirrelPositions := readMap("kartor/" + mapName + ".karta")
 	squirrels := make(map[int]*Actor)
 	for index, position := range squirrelPositions {
-		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0}
+		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0, hitPointsCurrent: MaxHitPointsSquirrel, hitPointsMax: MaxHitPointsSquirrel}
 	}
 	game := Game{
-		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
+		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer},
 		squirrels: squirrels,
 		world:     worldContent,
 		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
@@ -220,4 +220,5 @@ func (game *Game) Update(screen tcell.Screen) {
 
 	// Update fire.
 	game.SpreadFire()
+	game.CheckFireDamage()
 }

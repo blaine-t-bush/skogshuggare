@@ -8,11 +8,13 @@ type Coordinate struct {
 }
 
 type Actor struct {
-	position     Coordinate
-	destination  Coordinate
-	path         map[int]Coordinate
-	visionRadius int
-	score        int
+	position         Coordinate
+	destination      Coordinate
+	path             map[int]Coordinate
+	visionRadius     int
+	score            int
+	hitPointsCurrent int
+	hitPointsMax     int
 }
 
 type Tree struct {
