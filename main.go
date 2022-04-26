@@ -180,6 +180,14 @@ func (game *Game) Update(screen tcell.Screen) {
 				game.Chop(screen, DirDown, 1)
 			case rune('a'):
 				game.Chop(screen, DirLeft, 1)
+			case rune('W'):
+				game.Dig(screen, DirUp)
+			case rune('D'):
+				game.Dig(screen, DirRight)
+			case rune('S'):
+				game.Dig(screen, DirDown)
+			case rune('A'):
+				game.Dig(screen, DirLeft)
 			}
 		}
 	case *tcell.EventResize:

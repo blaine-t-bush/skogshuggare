@@ -44,6 +44,7 @@ const (
 	KeyWaterHeavy
 	KeyFire
 	KeyBurnt
+	KeyFirebreak
 	// Directions
 	DirUp
 	DirRight
@@ -103,6 +104,7 @@ var (
 		KeyWaterHeavy:    {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
 		KeyFire:          {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed)},
 		KeyBurnt:         {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkSlateGray)},
+		KeyFirebreak:     {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSandyBrown)},
 	}
 )
 

@@ -2,6 +2,8 @@ package main
 
 import (
 	"math/rand"
+
+	"github.com/gdamore/tcell"
 )
 
 func BurnoutChance(t int) float64 {
@@ -97,4 +99,40 @@ func (game *Game) CheckFireDamage() int {
 	}
 
 	return damage
+}
+
+func (game *Game) Dig(screen tcell.Screen, dir int) bool {
+	targetCoordinate := game.player.position
+	switch dir {
+	case DirUp:
+		targetCoordinate.y = targetCoordinate.y - 1
+	case DirRight:
+		targetCoordinate.x = targetCoordinate.x + 1
+	case DirDown:
+		targetCoordinate.y = targetCoordinate.y + 1
+	case DirLeft:
+		targetCoordinate.x = targetCoordinate.x - 1
+	default:
+		return false
+	}
+
+	if content, exists := game.world.content[targetCoordinate]; exists {
+		// Can't dig up trees or terrain.
+		// Therefore we can only dig up non-collidable objects and fire.
+		switch content := content.(type) {
+		case Object:
+			if content.collidable {
+				return false
+			} else {
+				break
+			}
+		case *Fire:
+			break
+		default:
+			return false
+		}
+	}
+
+	game.world.content[targetCoordinate] = Object{KeyFirebreak, false, false, false}
+	return true
 }
