@@ -15,9 +15,8 @@ const (
 	// Growth chances (per game tick)
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
-	SeedCreationChance  = 0.005 // Seed spawning
-	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
-	FireSpreadChance    = 0.020
+	FireSpreadChance    = 0.100 // Chance per update for each fire to spread to a random adjacent tile
+	FireBurnoutHalflife = 200   // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
 	// Hit points
 	MaxHitPointsPlayer   = 3
 	MaxHitPointsSquirrel = 1
@@ -44,6 +43,7 @@ const (
 	KeyWaterLight
 	KeyWaterHeavy
 	KeyFire
+	KeyBurnt
 	// Directions
 	DirUp
 	DirRight
@@ -102,6 +102,7 @@ var (
 		KeyWaterLight:    {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
 		KeyWaterHeavy:    {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
 		KeyFire:          {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed)},
+		KeyBurnt:         {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkSlateGray)},
 	}
 )
 

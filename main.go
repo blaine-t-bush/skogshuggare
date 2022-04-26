@@ -110,13 +110,13 @@ func readMap(fileName string) (World, Coordinate, []Coordinate) {
 			case MapSquirrel:
 				squirrelPositions = append(squirrelPositions, Coordinate{i, height})
 			case MapWall:
-				worldContent[Coordinate{i, height}] = Object{KeyWall, ContentCategoryTerrain, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false, false}
 			case MapWaterLight:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, ContentCategoryTerrain, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, true, false, false}
 			case MapWaterHeavy:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, ContentCategoryTerrain, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, true, false, false}
 			case MapFire:
-				worldContent[Coordinate{i, height}] = Object{KeyFire, ContentCategoryFire, false, false}
+				worldContent[Coordinate{i, height}] = &Fire{Coordinate{i, height}, 0}
 			}
 		}
 
@@ -219,6 +219,6 @@ func (game *Game) Update(screen tcell.Screen) {
 	game.GrowTrees()
 
 	// Update fire.
-	game.SpreadFire()
+	game.UpdateFire()
 	game.CheckFireDamage()
 }

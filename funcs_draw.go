@@ -85,6 +85,8 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				case Object:
 					// Draw object
 					game.DrawContent(screen, content.key, contentViewportCoord, actorViewportCoords)
+				case *Fire:
+					game.DrawContent(screen, KeyFire, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
