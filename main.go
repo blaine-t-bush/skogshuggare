@@ -17,20 +17,27 @@ import (
 func main() {
 	// Attempt to get map name from command line args.
 	var mapName string
-	if len(os.Args[1:]) >= 1 {
-		mapName = os.Args[1]
-	} else {
-		// Couldn't parse map name from command line. Using default map.
-		mapName = "skog"
-	}
-
-	// Attempt to get vision radius from command line args.
 	var visionRadius int
-	if len(os.Args[2:]) >= 1 {
-		visionRadius, _ = strconv.Atoi(os.Args[2])
-	} else {
-		// Couldn't parse map name from command line. Using default map.
+	if len(os.Args) <= 1 {
+		mapName = "skog"
 		visionRadius = 20
+	} else {
+		if len(os.Args[1:]) >= 1 {
+			mapName = os.Args[1]
+		} else {
+			// Couldn't parse map name from command line. Using default map.
+			mapName = "skog"
+		}
+
+		// Attempt to get vision radius from command line args.
+
+		if len(os.Args[2:]) >= 1 {
+			visionRadius, _ = strconv.Atoi(os.Args[2])
+		} else {
+			// Couldn't parse map name from command line. Using default map.
+			visionRadius = 20
+		}
+
 	}
 
 	// Seed randomizer.
@@ -92,7 +99,6 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 	for range ticker.C {
 		titleMenu.Update(screen)
 		titleMenu.Draw(screen)
-		fmt.Println("Ticked...")
 		if titleMenu.exit {
 			screen.Clear()
 			return

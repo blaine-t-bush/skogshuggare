@@ -60,7 +60,7 @@ type GrowthInfo struct {
 type TitleMenu struct {
 	cursorState    int
 	pageState      int
-	titleMenuPages map[int]TitleMenuPage
+	titleMenuPages map[int]*TitleMenuPage
 	exit           bool
 }
 
@@ -72,7 +72,8 @@ type TitleMenuItem struct {
 
 type TitleMenuPage struct {
 	name           int
-	content        string
+	content        []string
+	animationState int
 	cursorState    int
 	titleMenuItems map[int]TitleMenuItem
 }

@@ -100,14 +100,35 @@ var (
 // NOTE
 // Interesting Unicode characters (e.g. arrows) start at 2190.
 
-//
+// Title menu header
 
-const TitleMenuHeader = `
-  ####   #  #   ######  #######    ####  #   #  #    #  #######  #######    ###    ###   ######
- #       # #    #    #  #         #      #   #  #    #  #        #         #   #   #  #  #
- ####    ##     #    #  #  ####   ####   #####  #    #  #  ####  #  ####   #####   # ##  ###
-    #    # #    #    #  #     #      #   #   #  #    #  #     #  #     #  #     #  # #   #
-####     #  #   ######  #######  ####    #   #   ####   #######  #######  #     #  #  #  ######
+const TitleMenuHeaderAnim1 = `
+SKOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim2 = `
+sKOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim3 = `
+SkOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim4 = `
+SKoGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim5 = `
+SKOgSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim6 = `
+SKOGsHUGGARE
 
 
 `
