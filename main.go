@@ -17,34 +17,25 @@ import (
 func main() {
 	// Attempt to get map name from command line args.
 	var mapName string
-	if len(os.Args[1:]) >= 1 {
-		mapName = os.Args[1]
-	} else {
-		// Couldn't parse map name from command line. Using default map.
-		mapName = "skog"
-	}
-
-	// Attempt to get vision radius from command line args.
 	var visionRadius int
-	if len(os.Args[1:]) >= 2 {
-		visionRadius, _ = strconv.Atoi(os.Args[2])
-	} else {
-		// Couldn't parse map name from command line. Using default map.
+	if len(os.Args) <= 1 { // Make sure there are arguments before accessing slices
+		mapName = "skog.karta"
 		visionRadius = 100
-	}
+	} else {
+		// Attempt to get map name from command line args.
+		if len(os.Args[1:]) >= 1 {
+			mapName = os.Args[1]
+		} else {
+			// Couldn't parse map name from command line. Using default map.
+			mapName = "skog"
+		}
 
-	// Read map to initialize game state.
-	worldContent, playerPosition, squirrelPositions := readMap("kartor/" + mapName + ".karta")
-	squirrels := make(map[int]*Actor)
-	for index, position := range squirrelPositions {
-		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0, hitPointsCurrent: MaxHitPointsSquirrel, hitPointsMax: MaxHitPointsSquirrel}
-	}
-	game := Game{
-		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer},
-		squirrels: squirrels,
-		world:     worldContent,
-		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
-		exit:      false,
+		if len(os.Args[1:]) >= 2 {
+			visionRadius, _ = strconv.Atoi(os.Args[2])
+		} else {
+			// Couldn't parse map name from command line. Using default map.
+			visionRadius = 100
+		}
 	}
 
 	// Seed randomizer.
@@ -65,6 +56,30 @@ func main() {
 	screen.SetStyle(tcell.StyleDefault)
 	screen.Clear()
 
+	// Draw and handle menu inputs before initializing and drawing the game itself
+	titleMenu := GenerateTitleMenu() // Generate title menu
+	var twg sync.WaitGroup
+	twg.Add(1)
+	go TitleMenuHandler(&twg, screen, &titleMenu)
+	twg.Wait()
+
+	if len(titleMenu.selectedMap) > 0 {
+		mapName = titleMenu.selectedMap
+	}
+	// Read map to initialize game state.
+	worldContent, playerPosition, squirrelPositions := ReadMap("kartor/" + mapName)
+	squirrels := make(map[int]*Actor)
+	for index, position := range squirrelPositions {
+		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0, hitPointsCurrent: MaxHitPointsSquirrel, hitPointsMax: MaxHitPointsSquirrel}
+	}
+	game := Game{
+		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer},
+		squirrels: squirrels,
+		world:     worldContent,
+		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
+		exit:      false,
+	}
+
 	// Randomly seed map with trees in various states.
 	game.PopulateTrees(screen)
 	game.PopulateGrass(screen)
@@ -79,7 +94,28 @@ func main() {
 	fmt.Println("Game over. Final score:", game.player.score)
 }
 
-func readMap(fileName string) (World, Coordinate, []Coordinate) {
+func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) { // TODO make sure variables are not changed at the same time w/ mutex or channels
+	defer wg.Done()
+
+	// Initialize game menu update ticker.
+	ticker := time.NewTicker(TickRate * time.Millisecond)
+
+	// Start the input handler
+	go titleMenu.InputHandler(screen)
+	// Start title menu animation handler
+	go titleMenu.AnimationHandler()
+
+	for range ticker.C {
+		titleMenu.Update(screen)
+		titleMenu.Draw(screen)
+		if titleMenu.exit {
+			screen.Clear()
+			return
+		}
+	}
+}
+
+func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
 	worldContent := make(map[Coordinate]interface{})
 
@@ -141,8 +177,8 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game *Game) {
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
-		game.Update(screen)
 		game.Draw(screen)
+		game.Update(screen)
 		if game.exit {
 			wg.Done()
 			return

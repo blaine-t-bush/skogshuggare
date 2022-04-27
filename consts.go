@@ -74,6 +74,10 @@ const (
 	TopRightCorner
 	BottomRightCorner
 	BottomLeftCorner
+	// Title menu states
+	MainMenuPageOrder
+	NewGamePageOrder
+	// DifficultyPageOrder
 )
 
 var (
@@ -113,3 +117,58 @@ var (
 
 // NOTE
 // Interesting Unicode characters (e.g. arrows) start at 2190.
+
+// Title menu header
+const TitleMenuHeaderAnim1 = `SKOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim2 = `sKOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim3 = `SkOGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim4 = `SKoGSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim5 = `SKOgSHUGGARE
+
+
+`
+const TitleMenuHeaderAnim6 = `SKOGsHUGGARE
+
+
+`
+const TitleMenuHeaderAnim7 = `SKOGShUGGARE
+
+
+`
+const TitleMenuHeaderAnim8 = `SKOGSHuGGARE
+
+
+`
+const TitleMenuHeaderAnim9 = `SKOGSHUgGARE
+
+
+`
+const TitleMenuHeaderAnim10 = `SKOGSHUGgARE
+
+
+`
+const TitleMenuHeaderAnim11 = `SKOGSHUGGaRE
+
+
+`
+const TitleMenuHeaderAnim12 = `SKOGSHUGGArE
+
+
+`
+
+const TitleMenuHeaderAnim13 = `SKOGSHUGGARe
+
+
+`
