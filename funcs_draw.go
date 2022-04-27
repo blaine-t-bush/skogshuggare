@@ -85,6 +85,8 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				case Object:
 					// Draw object
 					game.DrawContent(screen, content.key, contentViewportCoord, actorViewportCoords)
+				case *Fire:
+					game.DrawContent(screen, KeyFire, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
@@ -135,6 +137,14 @@ func (game *Game) DrawMenu(screen tcell.Screen) {
 		screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
 		scoreIdx++
 	}
+
+	hitPointsString := "HP: " + strconv.Itoa(game.player.hitPointsCurrent)
+	hitPointsIdx := 0
+	for i := 1; i < len(hitPointsString)+1; i++ {
+		screen.SetContent(i, 2, rune(hitPointsString[hitPointsIdx]), nil, tcell.StyleDefault)
+		hitPointsIdx++
+	}
+
 	game.PrintToMenu(screen)
 }
 

@@ -30,17 +30,17 @@ func main() {
 		visionRadius, _ = strconv.Atoi(os.Args[2])
 	} else {
 		// Couldn't parse map name from command line. Using default map.
-		visionRadius = 20
+		visionRadius = 100
 	}
 
 	// Read map to initialize game state.
 	worldContent, playerPosition, squirrelPositions := readMap("kartor/" + mapName + ".karta")
 	squirrels := make(map[int]*Actor)
 	for index, position := range squirrelPositions {
-		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0}
+		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0, hitPointsCurrent: MaxHitPointsSquirrel, hitPointsMax: MaxHitPointsSquirrel}
 	}
 	game := Game{
-		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0},
+		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer},
 		squirrels: squirrels,
 		world:     worldContent,
 		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
@@ -72,9 +72,11 @@ func main() {
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Ticker(&wg, screen, game)
+	go Ticker(&wg, screen, &game)
 	wg.Wait()
 	screen.Fini()
+
+	fmt.Println("Game over. Final score:", game.player.score)
 }
 
 func readMap(fileName string) (World, Coordinate, []Coordinate) {
@@ -108,11 +110,13 @@ func readMap(fileName string) (World, Coordinate, []Coordinate) {
 			case MapSquirrel:
 				squirrelPositions = append(squirrelPositions, Coordinate{i, height})
 			case MapWall:
-				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false, false}
 			case MapWaterLight:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, true, false, false}
 			case MapWaterHeavy:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, true, false}
+				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, true, false, false}
+			case MapFire:
+				worldContent[Coordinate{i, height}] = &Fire{Coordinate{i, height}, 0}
 			}
 		}
 
@@ -131,10 +135,7 @@ func readMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
-	// Wait for this goroutine to finish before resuming main().
-	defer wg.Done()
-
+func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game *Game) {
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
@@ -143,6 +144,7 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game Game) {
 		game.Update(screen)
 		game.Draw(screen)
 		if game.exit {
+			wg.Done()
 			return
 		}
 	}
@@ -168,7 +170,7 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.MovePlayer(screen, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
-			case rune(' '):
+			case rune('q'):
 				game.Chop(screen, DirOmni, 1)
 			case rune('w'):
 				game.Chop(screen, DirUp, 1)
@@ -178,6 +180,16 @@ func (game *Game) Update(screen tcell.Screen) {
 				game.Chop(screen, DirDown, 1)
 			case rune('a'):
 				game.Chop(screen, DirLeft, 1)
+			case rune('Q'):
+				game.Dig(screen, DirOmni)
+			case rune('W'):
+				game.Dig(screen, DirUp)
+			case rune('D'):
+				game.Dig(screen, DirRight)
+			case rune('S'):
+				game.Dig(screen, DirDown)
+			case rune('A'):
+				game.Dig(screen, DirLeft)
 			}
 		}
 	case *tcell.EventResize:
@@ -186,8 +198,9 @@ func (game *Game) Update(screen tcell.Screen) {
 
 	// Give the squirrel a destination if it doesn't alreasdy have one,
 	// or update its destination if it's blocked.
+	// FIXME determine why squirrels sometimes stop even when there seem to be nearby available plantable coordinates
 	for key, squirrel := range game.squirrels {
-		if (Coordinate{0, 0} == squirrel.destination) || game.IsBlocked(squirrel.destination) {
+		if (Coordinate{0, 0} == squirrel.destination) || game.IsPathBlocked(squirrel.destination) {
 			squirrel.destination = game.GetRandomPlantableCoordinate()
 			squirrel.path = game.FindPath(squirrel.position, squirrel.destination)
 		}
@@ -195,18 +208,13 @@ func (game *Game) Update(screen tcell.Screen) {
 		// If squirrel is one move away from its destination, then it plants the seed at the destination,
 		// i.e. one tile away, and then picks a new destination.
 		// Otherwise, it just moves towards its current destination.
-		if squirrel.IsAdjacentToDestination() {
+		if squirrel.IsAdjacentToDestination() && !game.IsPathBlocked(squirrel.destination) {
 			game.PlantSeed(squirrel.destination)
 			squirrel.destination = game.GetRandomPlantableCoordinate()
 		} else {
-			var nextDirection int
-			for {
-				nextDirection = game.FindNextDirection(key)
-				if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
-					squirrel.destination = game.GetRandomPlantableCoordinate()
-				} else {
-					break
-				}
+			nextDirection := game.FindNextDirection(key)
+			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
+				squirrel.destination = game.GetRandomPlantableCoordinate()
 			}
 			game.MoveSquirrel(screen, 1, nextDirection, key)
 			game.UpdatePath(key)
@@ -215,4 +223,8 @@ func (game *Game) Update(screen tcell.Screen) {
 
 	// Update trees.
 	game.GrowTrees()
+
+	// Update fire.
+	game.UpdateFire()
+	game.CheckFireDamage()
 }

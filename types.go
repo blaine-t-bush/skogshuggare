@@ -8,11 +8,13 @@ type Coordinate struct {
 }
 
 type Actor struct {
-	position     Coordinate
-	destination  Coordinate
-	path         map[int]Coordinate
-	visionRadius int
-	score        int
+	position         Coordinate
+	destination      Coordinate
+	path             map[int]Coordinate
+	visionRadius     int
+	score            int
+	hitPointsCurrent int
+	hitPointsMax     int
 }
 
 type Tree struct {
@@ -20,9 +22,15 @@ type Tree struct {
 	state    int // See constants
 }
 
+type Fire struct {
+	position Coordinate
+	age      int // Number of game update ticks since fire was created
+}
+
 type Object struct {
 	key        int
 	collidable bool // Are actors blocked
+	flammable  bool // Can fire spread here
 	plantable  bool // Can seeds be planted here
 }
 

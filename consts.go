@@ -4,21 +4,33 @@ import "github.com/gdamore/tcell"
 
 const (
 	// Game parameters
-	TickRate = 30 // Milliseconds between ticks
+	TickRate      = 30 // Milliseconds between ticks
+	MaxIterations = 1000
 	// Map characters
 	MapPlayer     = 'p'
 	MapSquirrel   = 's'
 	MapWaterLight = 'w'
 	MapWaterHeavy = 'W'
 	MapWall       = '#'
+	MapFire       = 'f'
 	// Growth chances (per game tick)
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
-	SeedCreationChance  = 0.005 // Seed spawning
-	SeedCreationMax     = 3     // Maximum number of seeds to create per tick
+	FireSpawnChance     = 0.005 // Chance per update for fire to randomly spawn on an available tile
+	FireSpreadChance    = 0.100 // Chance per update for each fire to spread to a random adjacent tile
+	FireBurnoutHalflife = 200   // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
+	// Fire and hitpoints
+	MaxHitPointsPlayer   = 3
+	MaxHitPointsSquirrel = 1
+	DamageFire           = 1
+	FireWeightedDistance = 20
 	// Actors
 	ActorPlayer = iota
 	ActorSquirrel
+	ContentCategoryTerrain
+	ContentCategoryDecoration
+	ContentCategoryFire
+	ContentCategoryTree
 	// Keys for accessing properties of various symbols
 	KeyPlayer
 	KeySquirrel
@@ -33,6 +45,9 @@ const (
 	KeyGrassHeavy
 	KeyWaterLight
 	KeyWaterHeavy
+	KeyFire
+	KeyBurnt
+	KeyFirebreak
 	// Directions
 	DirUp
 	DirRight
@@ -78,7 +93,7 @@ var (
 
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
 		KeyPlayer:        {char: '@', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
-		KeySquirrel:      {char: 's', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
+		KeySquirrel:      {char: 'ơ', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
 		KeyWall:          {char: '#', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
 		KeyTreeSeed:      {char: '.', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorKhaki)},
 		KeyTreeSapling:   {char: '┃', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkKhaki)},
@@ -90,6 +105,9 @@ var (
 		KeyGrassHeavy:    {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		KeyWaterLight:    {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
 		KeyWaterHeavy:    {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
+		KeyFire:          {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
+		KeyBurnt:         {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkSlateGray).Background(tcell.ColorDarkGray)},
+		KeyFirebreak:     {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSandyBrown)},
 	}
 )
 
