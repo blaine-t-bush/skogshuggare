@@ -147,7 +147,7 @@ func (game *Game) Dig(dir int) int {
 		}
 
 		if dig {
-			game.world.content[targetCoordinate] = Object{KeyFirebreak, false, false, false}
+			game.world.content[targetCoordinate] = &Object{KeyFirebreak, false, false, false}
 			dugCount++
 		}
 	}
