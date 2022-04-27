@@ -2,9 +2,19 @@ package main
 
 import (
 	"math/rand"
-
-	"github.com/gdamore/tcell"
 )
+
+func RandomFireKey() int {
+	var key int
+	switch rand.Intn(2) {
+	case 0:
+		key = KeyFireType1
+	case 1:
+		key = KeyFireType2
+	}
+
+	return key
+}
 
 func BurnoutChance(t int) float64 {
 	return 1 - (1 / (1 + float64(t)/float64(FireBurnoutHalflife)))
@@ -114,7 +124,7 @@ func (game *Game) CheckFireDamage() int {
 	return damage
 }
 
-func (game *Game) Dig(screen tcell.Screen, dir int) int {
+func (game *Game) Dig(dir int) int {
 	// Determine which coordinates to check for digging based on direction and player position.
 	var targetCoordinates [4]Coordinate
 	switch dir {

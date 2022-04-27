@@ -61,7 +61,6 @@ func (titleMenu *TitleMenu) AnimationHandler() {
 			currentPage.animationState++ // Increment animation state after drawing it
 		}
 	}
-
 }
 
 func (titleMenu *TitleMenu) Update(screen tcell.Screen) {

@@ -1,6 +1,6 @@
 # skogshuggare
 
-Run with `go run . [map_name [vision_radius]]` or build with `go build .` and then run with `./skogshuggare [map_name [vision_radius]]`, e.g. `./skogshuggare flod` or `./skogshuggare ö 10`. The `map_name` argument specifies the name of a map file, not including extension, in the `./kartor/` directory to import and run. If no argument is provided, the program will attempt to use `skog` located in `./kartor/skog.karta`. The `vison_radius` argument specifies an integer value which defines the maximum distance from the player that is rendered on the map. If no argument is provided, a default of 100 is used.
+Run with `go run . [vision_radius]` or build with `go build .` and then run with `./skogshuggare [vision_radius]`, e.g. `./skogshuggare` or `./skogshuggare 20`. The `vison_radius` argument specifies an integer value which defines the maximum distance from the player that is rendered on the map. If no argument is provided, a default of 100 is used.
 
 ## Maps
 Maps are text files with the extension `.karta`. A map file must contain one player character and one squirrel character. Its boundaries must be defined with a rectangle of `#`. Within a map file, characters are defined as follows:

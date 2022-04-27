@@ -6,11 +6,11 @@ import (
 	"github.com/gdamore/tcell"
 )
 
-func (game *Game) Draw(screen tcell.Screen) {
-	screen.Clear()
-	game.DrawViewport(screen)
-	game.DrawMenu(screen)
-	screen.Show()
+func (game *Game) Draw() {
+	game.screen.Clear()
+	game.DrawViewport()
+	game.DrawMenu()
+	game.screen.Show()
 }
 
 // Check if the given object viewport coordinates are in the viewport
@@ -20,7 +20,8 @@ func (game *Game) IsInViewport(playerViewportCoord Coordinate, objectViewportCoo
 }
 
 // Only draw things within the player view range
-func (game *Game) DrawViewport(screen tcell.Screen) {
+// Draw the player last, run checks in DrawPlayer function to check if player should be drawn or not.
+func (game *Game) DrawViewport() {
 	/*
 		view_radius = 5
 		y_up = 5
@@ -42,9 +43,9 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	*/
 
 	// Draw player.
-	w, h := screen.Size()
+	w, h := game.screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
-	game.DrawContent(screen, KeyPlayer, playerViewportCoord, []Coordinate{})
+	game.DrawContent(KeyPlayer, playerViewportCoord, []Coordinate{})
 
 	// Draw squirrels.
 	var squirrelViewportCoord Coordinate
@@ -52,7 +53,7 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	for _, squirrel := range game.squirrels {
 		squirrelViewportCoord = Translate(playerViewportCoord, squirrel.position.x-game.player.position.x, squirrel.position.y-game.player.position.y)
 		if game.IsInViewport(playerViewportCoord, squirrelViewportCoord) {
-			game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
+			game.DrawContent(KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
 			squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
 		}
 	}
@@ -70,17 +71,17 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 			if border, isBorder := game.world.borders[coord]; isBorder {
 				switch border {
 				case TopBorder, BottomBorder:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneHLine, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneHLine, nil, tcell.StyleDefault)
 				case RightBorder, LeftBorder:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneVLine, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 				case TopLeftCorner:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
 				case TopRightCorner:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
 				case BottomRightCorner:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLRCorner, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 				case BottomLeftCorner:
-					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+					game.screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLLCorner, nil, tcell.StyleDefault)
 				}
 				continue
 			}
@@ -89,27 +90,27 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					game.DrawContent(screen, content.key, contentViewportCoord, actorViewportCoords)
+					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
 				case *Fire:
-					game.DrawContent(screen, KeyFire, contentViewportCoord, actorViewportCoords)
+					game.DrawContent(RandomFireKey(), contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						game.DrawContent(screen, KeyTreeStump, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeStump, contentViewportCoord, actorViewportCoords)
 					case TreeStateTrunk:
-						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
 					case TreeStateStumpling:
-						game.DrawContent(screen, KeyTreeStumpling, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeStumpling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSapling:
-						game.DrawContent(screen, KeyTreeSapling, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeSapling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSeed:
-						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeSeed, contentViewportCoord, actorViewportCoords)
 					case TreeStateAdult:
-						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, -1, -1), actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, 0, -1), actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, 1, -1), actorViewportCoords)
+						game.DrawContent(KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, -1, -1), actorViewportCoords)
+						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 0, -1), actorViewportCoords)
+						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 1, -1), actorViewportCoords)
 					}
 				}
 			}
@@ -118,7 +119,7 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 }
 
 // Draws content for the given key at the given coord, but only if that coord is not in priorityCoords
-func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, priorityCoords []Coordinate) {
+func (game *Game) DrawContent(key int, coord Coordinate, priorityCoords []Coordinate) {
 	symbol := symbols[key]
 	draw := true
 	for _, priorityCoord := range priorityCoords {
@@ -128,50 +129,50 @@ func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, pr
 	}
 
 	if draw {
-		screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
 	}
 }
 
-func (game *Game) DrawMenu(screen tcell.Screen) {
-	game.DrawMenuBorder(screen)
+func (game *Game) DrawMenu() {
+	game.DrawMenuBorder()
 	// Draw score: 0
 	//      12345678
 	scoreString := "Score: " + strconv.Itoa(game.player.score)
 	scoreIdx := 0
 	for i := 1; i < len(scoreString)+1; i++ {
-		screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
+		game.screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
 		scoreIdx++
 	}
 
 	hitPointsString := "HP: " + strconv.Itoa(game.player.hitPointsCurrent)
 	hitPointsIdx := 0
 	for i := 1; i < len(hitPointsString)+1; i++ {
-		screen.SetContent(i, 2, rune(hitPointsString[hitPointsIdx]), nil, tcell.StyleDefault)
+		game.screen.SetContent(i, 2, rune(hitPointsString[hitPointsIdx]), nil, tcell.StyleDefault)
 		hitPointsIdx++
 	}
 
-	game.PrintToMenu(screen)
+	game.PrintToMenu()
 }
 
-func (game *Game) DrawMenuBorder(screen tcell.Screen) {
+func (game *Game) DrawMenuBorder() {
 	for c := 1; c < game.menu.width; c++ { // Draw top and bottom borders
-		screen.SetContent(c, 0, tcell.RuneHLine, nil, tcell.StyleDefault)
-		screen.SetContent(c, game.menu.height, tcell.RuneHLine, nil, tcell.StyleDefault)
+		game.screen.SetContent(c, 0, tcell.RuneHLine, nil, tcell.StyleDefault)
+		game.screen.SetContent(c, game.menu.height, tcell.RuneHLine, nil, tcell.StyleDefault)
 	}
 
 	for r := 1; r <= game.menu.height-1; r++ { // Add left and right borders
-		screen.SetContent(0, r, tcell.RuneVLine, nil, tcell.StyleDefault)
-		screen.SetContent(game.menu.width, r, tcell.RuneVLine, nil, tcell.StyleDefault)
+		game.screen.SetContent(0, r, tcell.RuneVLine, nil, tcell.StyleDefault)
+		game.screen.SetContent(game.menu.width, r, tcell.RuneVLine, nil, tcell.StyleDefault)
 	}
 
 	// Add corners
-	screen.SetContent(0, 0, tcell.RuneULCorner, nil, tcell.StyleDefault)
-	screen.SetContent(game.menu.width, 0, tcell.RuneURCorner, nil, tcell.StyleDefault)
-	screen.SetContent(0, game.menu.height, tcell.RuneLLCorner, nil, tcell.StyleDefault)
-	screen.SetContent(game.menu.width, game.menu.height, tcell.RuneLRCorner, nil, tcell.StyleDefault)
+	game.screen.SetContent(0, 0, tcell.RuneULCorner, nil, tcell.StyleDefault)
+	game.screen.SetContent(game.menu.width, 0, tcell.RuneURCorner, nil, tcell.StyleDefault)
+	game.screen.SetContent(0, game.menu.height, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+	game.screen.SetContent(game.menu.width, game.menu.height, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 }
 
-func (game *Game) PrintToMenu(screen tcell.Screen) {
+func (game *Game) PrintToMenu() {
 	maxLen := game.menu.width
 	maxHeight := game.menu.height
 
@@ -187,7 +188,7 @@ func (game *Game) PrintToMenu(screen tcell.Screen) {
 			if currY >= maxHeight {
 				break
 			}
-			screen.SetContent(currX, currY, r, nil, tcell.StyleDefault)
+			game.screen.SetContent(currX, currY, r, nil, tcell.StyleDefault)
 			currX++
 		}
 	}

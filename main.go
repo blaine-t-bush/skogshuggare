@@ -15,81 +15,64 @@ import (
 )
 
 func main() {
-	// Attempt to get map name from command line args.
-	var mapName string
-	var visionRadius int
-	if len(os.Args) <= 1 { // Make sure there are arguments before accessing slices
-		mapName = "skog.karta"
-		visionRadius = 100
-	} else {
-		// Attempt to get map name from command line args.
-		if len(os.Args[1:]) >= 1 {
-			mapName = os.Args[1]
-		} else {
-			// Couldn't parse map name from command line. Using default map.
-			mapName = "skog"
-		}
-
-		if len(os.Args[1:]) >= 2 {
-			visionRadius, _ = strconv.Atoi(os.Args[2])
-		} else {
-			// Couldn't parse map name from command line. Using default map.
-			visionRadius = 100
-		}
+	// Attempt to get vision radius from command line args.
+	visionRadius := 100
+	if len(os.Args) >= 2 { // Make sure there are arguments before accessing slices
+		visionRadius, _ = strconv.Atoi(os.Args[1])
 	}
 
 	// Seed randomizer.
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	// Initialize game state.
+	var game Game
+	var err error
+
 	// Initialize tcell.
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
-	screen, err := tcell.NewScreen()
+	game.screen, err = tcell.NewScreen()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	if err = screen.Init(); err != nil {
+	if err = game.screen.Init(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 	}
 
 	// Set default style and clear terminal.
-	screen.SetStyle(tcell.StyleDefault)
-	screen.Clear()
+	game.screen.SetStyle(tcell.StyleDefault)
+	game.screen.Clear()
 
 	// Draw and handle menu inputs before initializing and drawing the game itself
 	titleMenu := GenerateTitleMenu() // Generate title menu
 	var twg sync.WaitGroup
 	twg.Add(1)
-	go TitleMenuHandler(&twg, screen, &titleMenu)
+	go TitleMenuHandler(&twg, game.screen, &titleMenu)
 	twg.Wait()
 
-	if len(titleMenu.selectedMap) > 0 {
-		mapName = titleMenu.selectedMap
-	}
 	// Read map to initialize game state.
+	mapName := titleMenu.selectedMap
 	worldContent, playerPosition, squirrelPositions := ReadMap("kartor/" + mapName)
 	squirrels := make(map[int]*Actor)
 	for index, position := range squirrelPositions {
 		squirrels[index] = &Actor{position: position, visionRadius: 100, score: 0, hitPointsCurrent: MaxHitPointsSquirrel, hitPointsMax: MaxHitPointsSquirrel}
 	}
-	game := Game{
-		player:    Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer},
-		squirrels: squirrels,
-		world:     worldContent,
-		menu:      Menu{15, 5, Coordinate{0, 0}, []string{}},
-		exit:      false,
-	}
+	game.player = Actor{position: playerPosition, visionRadius: visionRadius, score: 0, hitPointsCurrent: MaxHitPointsPlayer, hitPointsMax: MaxHitPointsPlayer}
+	game.squirrels = squirrels
+	game.world = worldContent
+	game.menu = Menu{15, 5, Coordinate{0, 0}, []string{}}
+	game.exit = false
 
 	// Randomly seed map with trees in various states.
-	game.PopulateTrees(screen)
-	game.PopulateGrass(screen)
+	game.PopulateTrees()
+	game.PopulateGrass()
 
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Ticker(&wg, screen, &game)
+	go game.Ticker(&wg)
 	wg.Wait()
-	screen.Fini()
+	game.screen.Fini()
 
 	fmt.Println("Game over. Final score:", game.player.score)
 }
@@ -171,14 +154,14 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game *Game) {
+func (game *Game) Ticker(wg *sync.WaitGroup) {
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
-		game.Draw(screen)
-		game.Update(screen)
+		game.Draw()
+		game.Update()
 		if game.exit {
 			wg.Done()
 			return
@@ -186,10 +169,10 @@ func Ticker(wg *sync.WaitGroup, screen tcell.Screen, game *Game) {
 	}
 }
 
-func (game *Game) Update(screen tcell.Screen) {
+func (game *Game) Update() {
 	// Listen for keyboard events for player actions,
 	// or terminal resizing events to re-draw the screen.
-	ev := screen.PollEvent()
+	ev := game.screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
 		switch ev.Key() {
@@ -197,39 +180,39 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.exit = true
 			return
 		case tcell.KeyUp:
-			game.MovePlayer(screen, 1, DirUp)
+			game.MovePlayer(1, DirUp)
 		case tcell.KeyRight:
-			game.MovePlayer(screen, 1, DirRight)
+			game.MovePlayer(1, DirRight)
 		case tcell.KeyDown:
-			game.MovePlayer(screen, 1, DirDown)
+			game.MovePlayer(1, DirDown)
 		case tcell.KeyLeft:
-			game.MovePlayer(screen, 1, DirLeft)
+			game.MovePlayer(1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case rune('q'):
-				game.Chop(screen, DirOmni, 1)
+				game.Chop(DirOmni, 1)
 			case rune('w'):
-				game.Chop(screen, DirUp, 1)
+				game.Chop(DirUp, 1)
 			case rune('d'):
-				game.Chop(screen, DirRight, 1)
+				game.Chop(DirRight, 1)
 			case rune('s'):
-				game.Chop(screen, DirDown, 1)
+				game.Chop(DirDown, 1)
 			case rune('a'):
-				game.Chop(screen, DirLeft, 1)
+				game.Chop(DirLeft, 1)
 			case rune('Q'):
-				game.Dig(screen, DirOmni)
+				game.Dig(DirOmni)
 			case rune('W'):
-				game.Dig(screen, DirUp)
+				game.Dig(DirUp)
 			case rune('D'):
-				game.Dig(screen, DirRight)
+				game.Dig(DirRight)
 			case rune('S'):
-				game.Dig(screen, DirDown)
+				game.Dig(DirDown)
 			case rune('A'):
-				game.Dig(screen, DirLeft)
+				game.Dig(DirLeft)
 			}
 		}
 	case *tcell.EventResize:
-		screen.Sync()
+		game.screen.Sync()
 	}
 
 	// Give the squirrel a destination if it doesn't alreasdy have one,
@@ -252,7 +235,7 @@ func (game *Game) Update(screen tcell.Screen) {
 			if nextDirection == DirNone { // No path found, or on top of destination. Get a new one.
 				squirrel.destination = game.GetRandomPlantableCoordinate()
 			}
-			game.MoveSquirrel(screen, 1, nextDirection, key)
+			game.MoveSquirrel(1, nextDirection, key)
 			game.UpdatePath(key)
 		}
 	}
