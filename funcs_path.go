@@ -158,17 +158,17 @@ func GetRandomDirection() int {
 func (node *Node) GetNeighbors(graph map[Coordinate]*Node) []Coordinate {
 	// Get slice of neighbors based, but only ones that are within the world dimensions.
 	var neighbors []Coordinate
-	if _, exists := graph[Coordinate{node.position.x, node.position.y - 1}]; exists {
-		neighbors = append(neighbors, Coordinate{node.position.x, node.position.y - 1})
+	if _, exists := graph[Translate(node.position, 0, -1)]; exists { // Check above
+		neighbors = append(neighbors, Translate(node.position, 0, -1))
 	}
-	if _, exists := graph[Coordinate{node.position.x + 1, node.position.y}]; exists {
-		neighbors = append(neighbors, Coordinate{node.position.x + 1, node.position.y})
+	if _, exists := graph[Translate(node.position, 1, 0)]; exists { // Check right
+		neighbors = append(neighbors, Translate(node.position, 1, 0))
 	}
-	if _, exists := graph[Coordinate{node.position.x, node.position.y + 1}]; exists {
-		neighbors = append(neighbors, Coordinate{node.position.x, node.position.y + 1})
+	if _, exists := graph[Translate(node.position, 0, 1)]; exists { // Check below
+		neighbors = append(neighbors, Translate(node.position, 0, 1))
 	}
-	if _, exists := graph[Coordinate{node.position.x - 1, node.position.y}]; exists {
-		neighbors = append(neighbors, Coordinate{node.position.x - 1, node.position.y})
+	if _, exists := graph[Translate(node.position, -1, 0)]; exists { // Check left
+		neighbors = append(neighbors, Translate(node.position, -1, 0))
 	}
 
 	return neighbors

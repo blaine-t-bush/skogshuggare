@@ -45,7 +45,7 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	var squirrelViewportCoord Coordinate
 	var squirrelViewportCoords []Coordinate
 	for _, squirrel := range game.squirrels {
-		squirrelViewportCoord = Coordinate{playerViewportCoord.x + squirrel.position.x - game.player.position.x, playerViewportCoord.y + squirrel.position.y - game.player.position.y}
+		squirrelViewportCoord = Translate(playerViewportCoord, squirrel.position.x-game.player.position.x, squirrel.position.y-game.player.position.y)
 		game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
 		squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
 	}
@@ -58,24 +58,22 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 			coord := Coordinate{x, y}
 
 			// Get the viewport coordinates
-			contentViewportX := playerViewportCoord.x + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-			contentViewportY := playerViewportCoord.y + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
-			contentViewportCoord := Coordinate{contentViewportX, contentViewportY}
+			contentViewportCoord := Translate(playerViewportCoord, x-game.player.position.x, y-game.player.position.y)
 
 			if border, isBorder := game.world.borders[coord]; isBorder {
 				switch border {
 				case TopBorder, BottomBorder:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneHLine, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneHLine, nil, tcell.StyleDefault)
 				case RightBorder, LeftBorder:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneVLine, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneVLine, nil, tcell.StyleDefault)
 				case TopLeftCorner:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneULCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneULCorner, nil, tcell.StyleDefault)
 				case TopRightCorner:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneURCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneURCorner, nil, tcell.StyleDefault)
 				case BottomRightCorner:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneLRCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLRCorner, nil, tcell.StyleDefault)
 				case BottomLeftCorner:
-					screen.SetContent(contentViewportX, contentViewportY, tcell.RuneLLCorner, nil, tcell.StyleDefault)
+					screen.SetContent(contentViewportCoord.x, contentViewportCoord.y, tcell.RuneLLCorner, nil, tcell.StyleDefault)
 				}
 				continue
 			}
@@ -102,9 +100,9 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, actorViewportCoords)
 					case TreeStateAdult:
 						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x - 1, contentViewportCoord.y - 1}, actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x, contentViewportCoord.y - 1}, actorViewportCoords)
-						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x + 1, contentViewportCoord.y - 1}, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, -1, -1), actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, 0, -1), actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Translate(contentViewportCoord, 1, -1), actorViewportCoords)
 					}
 				}
 			}

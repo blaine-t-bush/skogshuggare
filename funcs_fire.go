@@ -31,20 +31,22 @@ func (game *Game) UpdateFire() int {
 			// Check for spreading
 			if rand.Float64() <= FireSpreadChance {
 				// Pick random direction
-				spreadCoordinate := position
+				deltaX := 0
+				deltaY := 0
 				switch GetRandomDirection() {
 				case DirUp:
-					spreadCoordinate.y = spreadCoordinate.y - 1
+					deltaY = -1
 				case DirRight:
-					spreadCoordinate.x = spreadCoordinate.x + 1
+					deltaX = 1
 				case DirDown:
-					spreadCoordinate.y = spreadCoordinate.y + 1
+					deltaY = 1
 				case DirLeft:
-					spreadCoordinate.x = spreadCoordinate.x - 1
+					deltaX = -1
 				}
 
 				// Check if blocked
 				spread := true
+				spreadCoordinate := Translate(position, deltaX, deltaY)
 				if existingContent, exists := game.world.content[spreadCoordinate]; exists {
 					switch existingContent := existingContent.(type) {
 					case Object:
@@ -117,18 +119,18 @@ func (game *Game) Dig(screen tcell.Screen, dir int) int {
 	var targetCoordinates [4]Coordinate
 	switch dir {
 	case DirOmni:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
-		targetCoordinates[1] = Coordinate{game.player.position.x + 1, game.player.position.y}
-		targetCoordinates[2] = Coordinate{game.player.position.x, game.player.position.y + 1}
-		targetCoordinates[3] = Coordinate{game.player.position.x - 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, 0, -1)
+		targetCoordinates[1] = Translate(game.player.position, 1, 0)
+		targetCoordinates[2] = Translate(game.player.position, 0, 1)
+		targetCoordinates[3] = Translate(game.player.position, -1, 0)
 	case DirUp:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
+		targetCoordinates[0] = Translate(game.player.position, 0, -1)
 	case DirRight:
-		targetCoordinates[0] = Coordinate{game.player.position.x + 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, 1, 0)
 	case DirDown:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y + 1}
+		targetCoordinates[0] = Translate(game.player.position, 0, 1)
 	case DirLeft:
-		targetCoordinates[0] = Coordinate{game.player.position.x - 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, -1, 0)
 	}
 
 	// Dig tiles that are within the target coordinate(s) and unblocked

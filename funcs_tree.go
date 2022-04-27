@@ -104,18 +104,18 @@ func (game *Game) Chop(screen tcell.Screen, dir int, stages int) int {
 	var targetCoordinates [4]Coordinate
 	switch dir {
 	case DirOmni:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
-		targetCoordinates[1] = Coordinate{game.player.position.x + 1, game.player.position.y}
-		targetCoordinates[2] = Coordinate{game.player.position.x, game.player.position.y + 1}
-		targetCoordinates[3] = Coordinate{game.player.position.x - 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, 0, -1)
+		targetCoordinates[1] = Translate(game.player.position, 1, 0)
+		targetCoordinates[2] = Translate(game.player.position, 0, 1)
+		targetCoordinates[3] = Translate(game.player.position, -1, 0)
 	case DirUp:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
+		targetCoordinates[0] = Translate(game.player.position, 0, -1)
 	case DirRight:
-		targetCoordinates[0] = Coordinate{game.player.position.x + 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, 1, 0)
 	case DirDown:
-		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y + 1}
+		targetCoordinates[0] = Translate(game.player.position, 0, 1)
 	case DirLeft:
-		targetCoordinates[0] = Coordinate{game.player.position.x - 1, game.player.position.y}
+		targetCoordinates[0] = Translate(game.player.position, -1, 0)
 	}
 
 	// Chop trees that are within the target coordinate(s)

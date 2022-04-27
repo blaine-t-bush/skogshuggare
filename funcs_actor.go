@@ -12,49 +12,48 @@ func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
 	game.MoveActor(screen, &game.player, len, dir)
 }
 
-func (game *Game) MoveActor(screen tcell.Screen, actor *Actor, len int, dir int) {
+func (game *Game) MoveActor(screen tcell.Screen, actor *Actor, len int, dir int) bool {
 
 	// Determine (potential) new location.
 	if dir == DirRandom {
 		dir = GetRandomDirection()
 	}
 
-	newX := actor.position.x
-	newY := actor.position.y
+	deltaX := 0
+	deltaY := 0
 
 	if len != 0 {
 		switch dir {
 		case DirUp:
-			newY = actor.position.y - len
+			deltaY = -len
 		case DirRight:
-			newX = actor.position.x + len
+			deltaX = len
 		case DirDown:
-			newY = actor.position.y + len
+			deltaY = len
 		case DirLeft:
-			newX = actor.position.x - len
+			deltaX = -len
 		}
 	}
 
 	// Prevent actor from moving through an collidable object.
-	if content, exists := game.world.content[Coordinate{newX, newY}]; exists {
+	translate := true
+	if content, exists := game.world.content[Translate(actor.position, deltaX, deltaY)]; exists {
 		switch content := content.(type) {
 		case Object:
 			if content.collidable {
-				break
-			} else {
-				actor.position.y = newY
-				actor.position.x = newX
+				translate = false
 			}
 		case *Tree:
-			break // Collide; do not change position.
-		default:
-			actor.position.y = newY
-			actor.position.x = newX
+			translate = false
 		}
-	} else {
-		actor.position.y = newY
-		actor.position.x = newX
 	}
+
+	if translate {
+		actor.position.Translate(deltaX, deltaY)
+		return true
+	}
+
+	return false
 }
 
 func (actor *Actor) IsAdjacentToDestination() bool {
