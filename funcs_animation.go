@@ -6,37 +6,38 @@ import (
 	"time"
 )
 
-func (game *Game) AnimationHandler(wg *sync.WaitGroup, mutex *sync.Mutex) {
+func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 	defer wg.Done()
 
-	for {
-		// Stop animating if game is closed.
+	// Initialize animation update ticker.
+	ticker := time.NewTicker(AnimationTickDuration * time.Millisecond)
+
+	// Update animation state and re-draw on every tick.
+	for range ticker.C {
+		mutex.Lock()
+		game.AnimationUpdate()
+		game.Draw()
+		mutex.Unlock()
 		if game.exit {
+			wg.Done()
 			return
 		}
+	}
 
-		mutex.Lock()
+}
 
-		// Randomly change fire and water glyphs according to available keys.
-		fireKeys := [2]int{KeyFireLight, KeyFireHeavy}
-		waterKeys := [2]int{KeyWaterLight, KeyWaterHeavy}
-		for _, content := range game.world.content {
-			switch content := content.(type) {
-			case *Object:
-				if content.key == KeyWaterLight || content.key == KeyWaterHeavy {
-					content.key = waterKeys[rand.Intn(len(waterKeys))]
-				}
-			case *Fire:
-				content.key = fireKeys[rand.Intn(len(fireKeys))]
+func (game *Game) AnimationUpdate() {
+	// Randomly change fire and water glyphs according to available keys.
+	fireKeys := [2]int{KeyFireLight, KeyFireHeavy}
+	waterKeys := [2]int{KeyWaterLight, KeyWaterHeavy}
+	for _, content := range game.world.content {
+		switch content := content.(type) {
+		case *Object:
+			if content.key == KeyWaterLight || content.key == KeyWaterHeavy {
+				content.key = waterKeys[rand.Intn(len(waterKeys))]
 			}
+		case *Fire:
+			content.key = fireKeys[rand.Intn(len(fireKeys))]
 		}
-
-		// Re-render with the updated glyphs.
-		game.Draw()
-
-		mutex.Unlock()
-
-		// Wait AnimationRate milliseconds before updating animation states.
-		time.Sleep(AnimationRate * time.Millisecond)
 	}
 }

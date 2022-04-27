@@ -4,9 +4,9 @@ import "github.com/gdamore/tcell"
 
 const (
 	// Game parameters
-	TickRate      = 30  // Milliseconds between ticks
-	AnimationRate = 250 // Milliseconds between animation state updates
-	MaxIterations = 1000
+	StateTickDuration     = 30  // Milliseconds between game state update ticks
+	AnimationTickDuration = 200 // Milliseconds between animation update ticks
+	MaxIterations         = 1000
 	// Map characters
 	MapPlayer     = 'p'
 	MapSquirrel   = 's'

@@ -74,8 +74,8 @@ func main() {
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go game.Ticker(&wg, mutex)
-	go game.AnimationHandler(&wg, mutex)
+	go game.StateTicker(&wg, mutex)
+	go game.AnimationTicker(&wg, mutex)
 	wg.Wait()
 	game.screen.Fini()
 
@@ -87,7 +87,7 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 	defer wg.Done()
 
 	// Initialize game menu update ticker.
-	ticker := time.NewTicker(TickRate * time.Millisecond)
+	ticker := time.NewTicker(StateTickDuration * time.Millisecond)
 
 	// Start the input handler
 	go titleMenu.InputHandler(screen)
@@ -160,18 +160,18 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func (game *Game) Ticker(wg *sync.WaitGroup, mutex *sync.Mutex) {
+func (game *Game) StateTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 	defer wg.Done()
 
 	// Initialize game update ticker.
-	ticker := time.NewTicker(TickRate * time.Millisecond)
+	ticker := time.NewTicker(StateTickDuration * time.Millisecond)
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
 		mutex.Lock()
 		game.Draw()
 		mutex.Unlock()
-		game.Update(mutex)
+		game.StateUpdate(mutex)
 		if game.exit {
 			wg.Done()
 			return
@@ -179,7 +179,7 @@ func (game *Game) Ticker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 	}
 }
 
-func (game *Game) Update(mutex *sync.Mutex) {
+func (game *Game) StateUpdate(mutex *sync.Mutex) {
 	// Listen for keyboard events for player actions,
 	// or terminal resizing events to re-draw the screen.
 	ev := game.screen.PollEvent()
