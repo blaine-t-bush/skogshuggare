@@ -15,27 +15,10 @@ import (
 )
 
 func main() {
-	// Attempt to get map name from command line args.
-	var mapName string
-	var visionRadius int
-	if len(os.Args) <= 1 { // Make sure there are arguments before accessing slices
-		mapName = "skog.karta"
-		visionRadius = 100
-	} else {
-		// Attempt to get map name from command line args.
-		if len(os.Args[1:]) >= 1 {
-			mapName = os.Args[1]
-		} else {
-			// Couldn't parse map name from command line. Using default map.
-			mapName = "skog"
-		}
-
-		if len(os.Args[1:]) >= 2 {
-			visionRadius, _ = strconv.Atoi(os.Args[2])
-		} else {
-			// Couldn't parse map name from command line. Using default map.
-			visionRadius = 100
-		}
+	// Attempt to get vision radius from command line args.
+	visionRadius := 100
+	if len(os.Args) >= 2 { // Make sure there are arguments before accessing slices
+		visionRadius, _ = strconv.Atoi(os.Args[1])
 	}
 
 	// Seed randomizer.
@@ -67,10 +50,8 @@ func main() {
 	go TitleMenuHandler(&twg, game.screen, &titleMenu)
 	twg.Wait()
 
-	if len(titleMenu.selectedMap) > 0 {
-		mapName = titleMenu.selectedMap
-	}
 	// Read map to initialize game state.
+	mapName := titleMenu.selectedMap
 	worldContent, playerPosition, squirrelPositions := ReadMap("kartor/" + mapName)
 	squirrels := make(map[int]*Actor)
 	for index, position := range squirrelPositions {
