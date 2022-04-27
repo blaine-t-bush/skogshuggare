@@ -35,7 +35,7 @@ func (game *Game) MoveActor(actor *Actor, len int, dir int) bool {
 	translate := true
 	if content, exists := game.world.content[Translate(actor.position, deltaX, deltaY)]; exists {
 		switch content := content.(type) {
-		case Object:
+		case *Object:
 			if content.collidable {
 				translate = false
 			}

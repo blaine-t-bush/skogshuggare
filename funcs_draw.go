@@ -1,7 +1,10 @@
 package main
 
 import (
+	"math/rand"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/gdamore/tcell"
 )
@@ -80,11 +83,11 @@ func (game *Game) DrawViewport() {
 
 			if content, found := game.world.content[Coordinate{x, y}]; found {
 				switch content := content.(type) {
-				case Object:
+				case *Object:
 					// Draw object
 					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
 				case *Fire:
-					game.DrawContent(RandomFireKey(), contentViewportCoord, actorViewportCoords)
+					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
@@ -261,4 +264,39 @@ func (game *Game) GetDrawRanges() (xRadiusMin int, xRadiusMax int, yRadiusMin in
 	}
 
 	return xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax
+}
+
+func (game *Game) AnimationHandler(wg *sync.WaitGroup, mutex *sync.Mutex) {
+	defer wg.Done()
+
+	for {
+		// Stop animating if game is closed.
+		if game.exit {
+			return
+		}
+
+		mutex.Lock()
+
+		// Randomly change fire and water glyphs according to available keys.
+		fireKeys := [2]int{KeyFireLight, KeyFireHeavy}
+		waterKeys := [2]int{KeyWaterLight, KeyWaterHeavy}
+		for _, content := range game.world.content {
+			switch content := content.(type) {
+			case *Object:
+				if content.key == KeyWaterLight || content.key == KeyWaterHeavy {
+					content.key = waterKeys[rand.Intn(len(waterKeys))]
+				}
+			case *Fire:
+				content.key = fireKeys[rand.Intn(len(fireKeys))]
+			}
+		}
+
+		// Re-render with the updated glyphs.
+		game.Draw()
+
+		mutex.Unlock()
+
+		// Wait AnimationRate milliseconds before updating animation states.
+		time.Sleep(AnimationRate * time.Millisecond)
+	}
 }

@@ -67,14 +67,20 @@ func main() {
 	game.PopulateTrees()
 	game.PopulateGrass()
 
+	// Create a mutex so Ticker and AnimationHandler can both use the game map
+	// "concurrently" without colliding. To be more specific, the mutex prevents
+	// the two goroutines from doing exactly concurrent operations.
+	mutex := &sync.Mutex{}
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go game.Ticker(&wg)
+	wg.Add(2)
+	go game.Ticker(&wg, mutex)
+	go game.AnimationHandler(&wg, mutex)
 	wg.Wait()
 	game.screen.Fini()
 
 	fmt.Println("Game over. Final score:", game.player.score)
+	fmt.Println("")
 }
 
 func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) { // TODO make sure variables are not changed at the same time w/ mutex or channels
@@ -129,13 +135,13 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 			case MapSquirrel:
 				squirrelPositions = append(squirrelPositions, Coordinate{i, height})
 			case MapWall:
-				worldContent[Coordinate{i, height}] = Object{KeyWall, true, false, false}
+				worldContent[Coordinate{i, height}] = &Object{KeyWall, true, false, false}
 			case MapWaterLight:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterLight, true, false, false}
+				worldContent[Coordinate{i, height}] = &Object{KeyWaterLight, true, false, false}
 			case MapWaterHeavy:
-				worldContent[Coordinate{i, height}] = Object{KeyWaterHeavy, true, false, false}
+				worldContent[Coordinate{i, height}] = &Object{KeyWaterHeavy, true, false, false}
 			case MapFire:
-				worldContent[Coordinate{i, height}] = &Fire{Coordinate{i, height}, 0}
+				worldContent[Coordinate{i, height}] = &Fire{KeyFireLight, Coordinate{i, height}, 0}
 			}
 		}
 
@@ -154,14 +160,18 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func (game *Game) Ticker(wg *sync.WaitGroup) {
+func (game *Game) Ticker(wg *sync.WaitGroup, mutex *sync.Mutex) {
+	defer wg.Done()
+
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
 	// Update game state and re-draw on every tick.
 	for range ticker.C {
+		mutex.Lock()
 		game.Draw()
-		game.Update()
+		mutex.Unlock()
+		game.Update(mutex)
 		if game.exit {
 			wg.Done()
 			return
@@ -169,10 +179,11 @@ func (game *Game) Ticker(wg *sync.WaitGroup) {
 	}
 }
 
-func (game *Game) Update() {
+func (game *Game) Update(mutex *sync.Mutex) {
 	// Listen for keyboard events for player actions,
 	// or terminal resizing events to re-draw the screen.
 	ev := game.screen.PollEvent()
+	mutex.Lock()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
 		switch ev.Key() {
@@ -246,4 +257,5 @@ func (game *Game) Update() {
 	// Update fire.
 	game.UpdateFire()
 	game.CheckFireDamage()
+	mutex.Unlock()
 }

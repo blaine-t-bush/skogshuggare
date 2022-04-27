@@ -4,7 +4,8 @@ import "github.com/gdamore/tcell"
 
 const (
 	// Game parameters
-	TickRate      = 30 // Milliseconds between ticks
+	TickRate      = 30  // Milliseconds between ticks
+	AnimationRate = 250 // Milliseconds between animation state updates
 	MaxIterations = 1000
 	// Map characters
 	MapPlayer     = 'p'
@@ -45,8 +46,8 @@ const (
 	KeyGrassHeavy
 	KeyWaterLight
 	KeyWaterHeavy
-	KeyFireType1
-	KeyFireType2
+	KeyFireLight
+	KeyFireHeavy
 	KeyBurnt
 	KeyFirebreak
 	// Directions
@@ -110,8 +111,8 @@ var (
 		KeyGrassHeavy:    {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		KeyWaterLight:    {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
 		KeyWaterHeavy:    {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
-		KeyFireType1:     {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
-		KeyFireType2:     {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed).Background(tcell.ColorOrange)},
+		KeyFireLight:     {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
+		KeyFireHeavy:     {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed).Background(tcell.ColorOrange)},
 		KeyBurnt:         {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkSlateGray).Background(tcell.ColorDarkGray)},
 		KeyFirebreak:     {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSandyBrown)},
 	}

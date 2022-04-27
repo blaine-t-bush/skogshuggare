@@ -23,6 +23,7 @@ type Tree struct {
 }
 
 type Fire struct {
+	key      int // Represents which glyph to draw with
 	position Coordinate
 	age      int // Number of game update ticks since fire was created
 }

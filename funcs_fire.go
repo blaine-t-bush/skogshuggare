@@ -4,25 +4,13 @@ import (
 	"math/rand"
 )
 
-func RandomFireKey() int {
-	var key int
-	switch rand.Intn(2) {
-	case 0:
-		key = KeyFireType1
-	case 1:
-		key = KeyFireType2
-	}
-
-	return key
-}
-
 func BurnoutChance(t int) float64 {
 	return 1 - (1 / (1 + float64(t)/float64(FireBurnoutHalflife)))
 }
 
 func (game *Game) SpawnRandomFire() {
 	coord := game.GetRandomFlammableCoordinate()
-	game.world.content[coord] = &Fire{coord, 0}
+	game.world.content[coord] = &Fire{KeyFireLight, coord, 0}
 }
 
 func (game *Game) UpdateFire() int {
@@ -35,7 +23,7 @@ func (game *Game) UpdateFire() int {
 			// Check for burnout
 			if rand.Float64() <= BurnoutChance(content.age) {
 				delete(game.world.content, position)
-				game.world.content[position] = Object{KeyBurnt, false, false, true}
+				game.world.content[position] = &Object{KeyBurnt, false, false, true}
 			}
 
 			// Check for spreading
@@ -59,7 +47,7 @@ func (game *Game) UpdateFire() int {
 				spreadCoordinate := Translate(position, deltaX, deltaY)
 				if existingContent, exists := game.world.content[spreadCoordinate]; exists {
 					switch existingContent := existingContent.(type) {
-					case Object:
+					case *Object:
 						if !existingContent.flammable {
 							spread = false
 						}
@@ -68,7 +56,7 @@ func (game *Game) UpdateFire() int {
 
 				// Spread if not blocked
 				if spread {
-					game.world.content[spreadCoordinate] = &Fire{spreadCoordinate, 0}
+					game.world.content[spreadCoordinate] = &Fire{KeyFireLight, spreadCoordinate, 0}
 					spreadAndSpawnCount++
 				}
 			}
@@ -149,7 +137,7 @@ func (game *Game) Dig(dir int) int {
 		dig := true
 		if content, exists := game.world.content[targetCoordinate]; exists {
 			switch content := content.(type) {
-			case Object:
+			case *Object:
 				if content.collidable {
 					dig = false
 				}
