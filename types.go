@@ -42,6 +42,7 @@ type World struct {
 }
 
 type Game struct {
+	screen    tcell.Screen
 	player    Actor
 	squirrels map[int]*Actor
 	world     World

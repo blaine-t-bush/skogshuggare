@@ -2,8 +2,6 @@ package main
 
 import (
 	"math/rand"
-
-	"github.com/gdamore/tcell"
 )
 
 func (game *Game) PlantSeed(coordinate Coordinate) bool {
@@ -16,7 +14,7 @@ func (game *Game) PlantSeed(coordinate Coordinate) bool {
 	}
 }
 
-func (game *Game) PopulateTrees(screen tcell.Screen) int {
+func (game *Game) PopulateTrees() int {
 	states := []int{
 		TreeStateSeed,
 		TreeStateSapling,
@@ -34,7 +32,7 @@ func (game *Game) PopulateTrees(screen tcell.Screen) int {
 	return treeCount
 }
 
-func (game *Game) PopulateGrass(screen tcell.Screen) int {
+func (game *Game) PopulateGrass() int {
 	keys := []int{
 		KeyGrassLight,
 		KeyGrassHeavy,
@@ -69,7 +67,7 @@ func (game *Game) GrowTrees() int {
 	return growthCount
 }
 
-func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate, stages int) bool {
+func (game *Game) DecrementTree(position Coordinate, stages int) bool {
 	content, exists := game.world.content[position]
 
 	if !exists { // No content of any type at this location
@@ -99,7 +97,7 @@ func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate, stages
 	}
 }
 
-func (game *Game) Chop(screen tcell.Screen, dir int, stages int) int {
+func (game *Game) Chop(dir int, stages int) int {
 	// Determine which coordinates to check for chopping based on direction and player position.
 	var targetCoordinates [4]Coordinate
 	switch dir {
@@ -124,7 +122,7 @@ func (game *Game) Chop(screen tcell.Screen, dir int, stages int) int {
 		if content, exists := game.world.content[targetCoordinate]; exists {
 			switch content.(type) {
 			case *Tree:
-				if game.DecrementTree(screen, targetCoordinate, stages) {
+				if game.DecrementTree(targetCoordinate, stages) {
 					choppedCount++
 				}
 			}

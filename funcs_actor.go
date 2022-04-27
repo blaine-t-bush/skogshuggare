@@ -1,18 +1,14 @@
 package main
 
-import (
-	"github.com/gdamore/tcell"
-)
-
-func (game *Game) MoveSquirrel(screen tcell.Screen, len int, dir int, squirrelKey int) {
-	game.MoveActor(screen, game.squirrels[squirrelKey], len, dir)
+func (game *Game) MoveSquirrel(len int, dir int, squirrelKey int) {
+	game.MoveActor(game.squirrels[squirrelKey], len, dir)
 }
 
-func (game *Game) MovePlayer(screen tcell.Screen, len int, dir int) {
-	game.MoveActor(screen, &game.player, len, dir)
+func (game *Game) MovePlayer(len int, dir int) {
+	game.MoveActor(&game.player, len, dir)
 }
 
-func (game *Game) MoveActor(screen tcell.Screen, actor *Actor, len int, dir int) bool {
+func (game *Game) MoveActor(actor *Actor, len int, dir int) bool {
 
 	// Determine (potential) new location.
 	if dir == DirRandom {

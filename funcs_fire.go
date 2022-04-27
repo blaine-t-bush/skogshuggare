@@ -2,8 +2,6 @@ package main
 
 import (
 	"math/rand"
-
-	"github.com/gdamore/tcell"
 )
 
 func BurnoutChance(t int) float64 {
@@ -114,7 +112,7 @@ func (game *Game) CheckFireDamage() int {
 	return damage
 }
 
-func (game *Game) Dig(screen tcell.Screen, dir int) int {
+func (game *Game) Dig(dir int) int {
 	// Determine which coordinates to check for digging based on direction and player position.
 	var targetCoordinates [4]Coordinate
 	switch dir {
