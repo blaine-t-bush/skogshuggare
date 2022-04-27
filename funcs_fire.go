@@ -112,38 +112,44 @@ func (game *Game) CheckFireDamage() int {
 	return damage
 }
 
-func (game *Game) Dig(screen tcell.Screen, dir int) bool {
-	targetCoordinate := game.player.position
+func (game *Game) Dig(screen tcell.Screen, dir int) int {
+	// Determine which coordinates to check for digging based on direction and player position.
+	var targetCoordinates [4]Coordinate
 	switch dir {
+	case DirOmni:
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
+		targetCoordinates[1] = Coordinate{game.player.position.x + 1, game.player.position.y}
+		targetCoordinates[2] = Coordinate{game.player.position.x, game.player.position.y + 1}
+		targetCoordinates[3] = Coordinate{game.player.position.x - 1, game.player.position.y}
 	case DirUp:
-		targetCoordinate.y = targetCoordinate.y - 1
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
 	case DirRight:
-		targetCoordinate.x = targetCoordinate.x + 1
+		targetCoordinates[0] = Coordinate{game.player.position.x + 1, game.player.position.y}
 	case DirDown:
-		targetCoordinate.y = targetCoordinate.y + 1
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y + 1}
 	case DirLeft:
-		targetCoordinate.x = targetCoordinate.x - 1
-	default:
-		return false
+		targetCoordinates[0] = Coordinate{game.player.position.x - 1, game.player.position.y}
 	}
 
-	if content, exists := game.world.content[targetCoordinate]; exists {
-		// Can't dig up trees or terrain.
-		// Therefore we can only dig up non-collidable objects and fire.
-		switch content := content.(type) {
-		case Object:
-			if content.collidable {
-				return false
-			} else {
-				break
+	// Dig tiles that are within the target coordinate(s) and unblocked
+	dugCount := 0
+	for _, targetCoordinate := range targetCoordinates {
+		dig := true
+		if content, exists := game.world.content[targetCoordinate]; exists {
+			switch content := content.(type) {
+			case Object:
+				if content.collidable {
+					dig = false
+				}
+			case *Tree:
+				dig = false
 			}
-		case *Fire:
-			break
-		default:
-			return false
+		}
+
+		if dig {
+			game.world.content[targetCoordinate] = Object{KeyFirebreak, false, false, false}
+			dugCount++
 		}
 	}
-
-	game.world.content[targetCoordinate] = Object{KeyFirebreak, false, false, false}
-	return true
+	return dugCount
 }

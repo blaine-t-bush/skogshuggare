@@ -170,7 +170,7 @@ func (game *Game) Update(screen tcell.Screen) {
 			game.MovePlayer(screen, 1, DirLeft)
 		case tcell.KeyRune:
 			switch ev.Rune() {
-			case rune(' '):
+			case rune('q'):
 				game.Chop(screen, DirOmni, 1)
 			case rune('w'):
 				game.Chop(screen, DirUp, 1)
@@ -180,6 +180,8 @@ func (game *Game) Update(screen tcell.Screen) {
 				game.Chop(screen, DirDown, 1)
 			case rune('a'):
 				game.Chop(screen, DirLeft, 1)
+			case rune('Q'):
+				game.Dig(screen, DirOmni)
 			case rune('W'):
 				game.Dig(screen, DirUp)
 			case rune('D'):
