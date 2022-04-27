@@ -13,8 +13,13 @@ func (game *Game) Draw(screen tcell.Screen) {
 	screen.Show()
 }
 
+// Check if the given object viewport coordinates are in the viewport
+func (game *Game) IsInViewport(playerViewportCoord Coordinate, objectViewportCoords Coordinate) bool {
+	return (objectViewportCoords.x >= playerViewportCoord.x-game.player.visionRadius && objectViewportCoords.x <= playerViewportCoord.x+game.player.visionRadius) &&
+		(objectViewportCoords.y >= playerViewportCoord.y-game.player.visionRadius && objectViewportCoords.y <= playerViewportCoord.y+game.player.visionRadius)
+}
+
 // Only draw things within the player view range
-// Draw the player last, run checks in DrawPlayer function to check if player should be drawn or not.
 func (game *Game) DrawViewport(screen tcell.Screen) {
 	/*
 		view_radius = 5
@@ -46,8 +51,10 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 	var squirrelViewportCoords []Coordinate
 	for _, squirrel := range game.squirrels {
 		squirrelViewportCoord = Translate(playerViewportCoord, squirrel.position.x-game.player.position.x, squirrel.position.y-game.player.position.y)
-		game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
-		squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
+		if game.IsInViewport(playerViewportCoord, squirrelViewportCoord) {
+			game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
+			squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
+		}
 	}
 
 	// Draw content.
@@ -188,7 +195,7 @@ func (game *Game) PrintToMenu(screen tcell.Screen) {
 }
 
 func (game *Game) AppendToMenuMessages(text string) {
-	if len(game.menu.messages) <= 2 {
+	if len(game.menu.messages) <= 1 {
 		game.menu.messages = append(game.menu.messages, text)
 	} else {
 		game.menu.messages = append(game.menu.messages[:0], game.menu.messages[1:]...)
