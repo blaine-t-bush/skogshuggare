@@ -70,7 +70,7 @@ func main() {
 	// Wait for Loop() goroutine to finish before moving on.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Ticker(&wg, &game)
+	go game.Ticker(&wg)
 	wg.Wait()
 	game.screen.Fini()
 
@@ -154,7 +154,7 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
 }
 
-func Ticker(wg *sync.WaitGroup, game *Game) {
+func (game *Game) Ticker(wg *sync.WaitGroup) {
 	// Initialize game update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 

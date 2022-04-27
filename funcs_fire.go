@@ -4,6 +4,18 @@ import (
 	"math/rand"
 )
 
+func RandomFireKey() int {
+	var key int
+	switch rand.Intn(2) {
+	case 0:
+		key = KeyFireType1
+	case 1:
+		key = KeyFireType2
+	}
+
+	return key
+}
+
 func BurnoutChance(t int) float64 {
 	return 1 - (1 / (1 + float64(t)/float64(FireBurnoutHalflife)))
 }
