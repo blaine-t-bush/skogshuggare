@@ -100,39 +100,32 @@ func (game *Game) DecrementTree(screen tcell.Screen, position Coordinate, stages
 }
 
 func (game *Game) Chop(screen tcell.Screen, dir int, stages int) int {
+	// Determine which coordinates to check for chopping based on direction and player position.
+	var targetCoordinates [4]Coordinate
+	switch dir {
+	case DirOmni:
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
+		targetCoordinates[1] = Coordinate{game.player.position.x + 1, game.player.position.y}
+		targetCoordinates[2] = Coordinate{game.player.position.x, game.player.position.y + 1}
+		targetCoordinates[3] = Coordinate{game.player.position.x - 1, game.player.position.y}
+	case DirUp:
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y - 1}
+	case DirRight:
+		targetCoordinates[0] = Coordinate{game.player.position.x + 1, game.player.position.y}
+	case DirDown:
+		targetCoordinates[0] = Coordinate{game.player.position.x, game.player.position.y + 1}
+	case DirLeft:
+		targetCoordinates[0] = Coordinate{game.player.position.x - 1, game.player.position.y}
+	}
+
+	// Chop trees that are within the target coordinate(s)
 	choppedCount := 0
-outside:
-	for _, content := range game.world.content {
-		switch content := content.(type) {
-		case *Tree:
-			isAbove := content.position.y == game.player.position.y-1 && content.position.x == game.player.position.x
-			isRight := content.position.y == game.player.position.y && content.position.x == game.player.position.x+1
-			isBelow := content.position.y == game.player.position.y+1 && content.position.x == game.player.position.x
-			isLeft := content.position.y == game.player.position.y && content.position.x == game.player.position.x-1
-			switch dir {
-			case DirOmni:
-				if (isAbove || isRight || isBelow || isLeft) && game.DecrementTree(screen, content.position, stages) {
+	for _, targetCoordinate := range targetCoordinates {
+		if content, exists := game.world.content[targetCoordinate]; exists {
+			switch content.(type) {
+			case *Tree:
+				if game.DecrementTree(screen, targetCoordinate, stages) {
 					choppedCount++
-				}
-			case DirUp:
-				if isAbove && game.DecrementTree(screen, content.position, stages) {
-					choppedCount++
-					break outside
-				}
-			case DirRight:
-				if isRight && game.DecrementTree(screen, content.position, stages) {
-					choppedCount++
-					break outside
-				}
-			case DirDown:
-				if isBelow && game.DecrementTree(screen, content.position, stages) {
-					choppedCount++
-					break outside
-				}
-			case DirLeft:
-				if isLeft && game.DecrementTree(screen, content.position, stages) {
-					choppedCount++
-					break outside
 				}
 			}
 		}
