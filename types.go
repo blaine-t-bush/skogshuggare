@@ -8,10 +8,13 @@ type Coordinate struct {
 }
 
 type Actor struct {
-	position     Coordinate
-	destination  Coordinate
-	visionRadius int
-	score        int
+	position         Coordinate
+	destination      Coordinate
+	path             map[int]Coordinate
+	visionRadius     int
+	score            int
+	hitPointsCurrent int
+	hitPointsMax     int
 }
 
 type Tree struct {
@@ -19,9 +22,15 @@ type Tree struct {
 	state    int // See constants
 }
 
+type Fire struct {
+	position Coordinate
+	age      int // Number of game update ticks since fire was created
+}
+
 type Object struct {
 	key        int
 	collidable bool // Are actors blocked
+	flammable  bool // Can fire spread here
 	plantable  bool // Can seeds be planted here
 }
 
@@ -33,11 +42,11 @@ type World struct {
 }
 
 type Game struct {
-	player   Actor
-	squirrel Actor
-	world    World
-	menu     Menu
-	exit     bool
+	player    Actor
+	squirrels map[int]*Actor
+	world     World
+	menu      Menu
+	exit      bool
 }
 
 type Menu struct {
@@ -48,8 +57,9 @@ type Menu struct {
 }
 
 type Symbol struct {
-	char  rune
-	style tcell.Style
+	char       rune
+	aboveActor bool
+	style      tcell.Style
 }
 
 type GrowthInfo struct {

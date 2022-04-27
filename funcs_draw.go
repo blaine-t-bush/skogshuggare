@@ -36,16 +36,31 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 		Player pos = (5,5)
 	*/
 
-	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
+	// Draw player.
+	w, h := screen.Size()
+	playerViewportCoord := Coordinate{w / 2, h / 2}
+	game.DrawContent(screen, KeyPlayer, playerViewportCoord, []Coordinate{})
 
+	// Draw squirrels.
+	var squirrelViewportCoord Coordinate
+	var squirrelViewportCoords []Coordinate
+	for _, squirrel := range game.squirrels {
+		squirrelViewportCoord = Coordinate{playerViewportCoord.x + squirrel.position.x - game.player.position.x, playerViewportCoord.y + squirrel.position.y - game.player.position.y}
+		game.DrawContent(screen, KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
+		squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
+	}
+
+	// Draw content.
+	actorViewportCoords := append(squirrelViewportCoords, playerViewportCoord)
+	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
 	for x := xRadiusMin; x <= xRadiusMax; x++ {
 		for y := yRadiusMin; y <= yRadiusMax; y++ {
 			coord := Coordinate{x, y}
-			w, h := screen.Size()
 
 			// Get the viewport coordinates
-			contentViewportX := (w / 2) + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
-			contentViewportY := (h / 2) + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+			contentViewportX := playerViewportCoord.x + (x - game.player.position.x) // Player_viewport_x + Object_real_x - Player_real_x
+			contentViewportY := playerViewportCoord.y + (y - game.player.position.y) // Player_viewport_y + Object_real_y - Player_real_y
+			contentViewportCoord := Coordinate{contentViewportX, contentViewportY}
 
 			if border, isBorder := game.world.borders[coord]; isBorder {
 				switch border {
@@ -69,50 +84,47 @@ func (game *Game) DrawViewport(screen tcell.Screen) {
 				switch content := content.(type) {
 				case Object:
 					// Draw object
-					screen.SetContent(contentViewportX, contentViewportY, symbols[content.key].char, nil, symbols[content.key].style)
+					game.DrawContent(screen, content.key, contentViewportCoord, actorViewportCoords)
+				case *Fire:
+					game.DrawContent(screen, KeyFire, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStump].char, nil, symbols[KeyTreeStump].style)
+						game.DrawContent(screen, KeyTreeStump, contentViewportCoord, actorViewportCoords)
 					case TreeStateTrunk:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
 					case TreeStateStumpling:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeStumpling].char, nil, symbols[KeyTreeStumpling].style)
+						game.DrawContent(screen, KeyTreeStumpling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSapling:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSapling].char, nil, symbols[KeyTreeSapling].style)
+						game.DrawContent(screen, KeyTreeSapling, contentViewportCoord, actorViewportCoords)
 					case TreeStateSeed:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeSeed].char, nil, symbols[KeyTreeSeed].style)
+						game.DrawContent(screen, KeyTreeSeed, contentViewportCoord, actorViewportCoords)
 					case TreeStateAdult:
-						screen.SetContent(contentViewportX, contentViewportY, symbols[KeyTreeTrunk].char, nil, symbols[KeyTreeTrunk].style)
-						screen.SetContent(contentViewportX-1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
-						screen.SetContent(contentViewportX, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
-						screen.SetContent(contentViewportX+1, contentViewportY-1, symbols[KeyTreeLeaves].char, nil, symbols[KeyTreeLeaves].style)
+						game.DrawContent(screen, KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x - 1, contentViewportCoord.y - 1}, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x, contentViewportCoord.y - 1}, actorViewportCoords)
+						game.DrawContent(screen, KeyTreeLeaves, Coordinate{contentViewportCoord.x + 1, contentViewportCoord.y - 1}, actorViewportCoords)
 					}
 				}
 			}
 		}
 	}
-
-	game.DrawSquirrel(screen)
-	game.DrawPlayer(screen)
 }
 
-func (game *Game) DrawPlayer(screen tcell.Screen) {
-	w, h := screen.Size()
-	playerX, playerY := w/2, h/2 // Save player position to these variables. Previous implementation caused variables to be changed multiple times.
-	// TODO implement functionality to allow other runes than tree canopies to be drawn instead of the player.
-	// Currently only draws tree canopies above player.
-	cellRune, _, _, _ := screen.GetContent(playerX, playerY) // Only get the rune from the screen, other return values are not needed.
-	if cellRune != symbols[KeyTreeLeaves].char {
-		screen.SetContent(playerX, playerY, symbols[KeyPlayer].char, nil, symbols[KeyPlayer].style) // Draw the player at the "center" of the view
+// Draws content for the given key at the given coord, but only if that coord is not in priorityCoords
+func (game *Game) DrawContent(screen tcell.Screen, key int, coord Coordinate, priorityCoords []Coordinate) {
+	symbol := symbols[key]
+	draw := true
+	for _, priorityCoord := range priorityCoords {
+		if coord == priorityCoord && !symbol.aboveActor {
+			draw = false
+		}
 	}
-}
 
-func (game *Game) DrawSquirrel(screen tcell.Screen) {
-	w, h := screen.Size()
-	screen.SetContent(w/2+game.squirrel.position.x-game.player.position.x, h/2+game.squirrel.position.y-game.player.position.y, symbols[KeySquirrel].char, nil, symbols[KeySquirrel].style)
-
+	if draw {
+		screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+	}
 }
 
 func (game *Game) DrawMenu(screen tcell.Screen) {
@@ -125,6 +137,14 @@ func (game *Game) DrawMenu(screen tcell.Screen) {
 		screen.SetContent(i, 1, rune(scoreString[scoreIdx]), nil, tcell.StyleDefault)
 		scoreIdx++
 	}
+
+	hitPointsString := "HP: " + strconv.Itoa(game.player.hitPointsCurrent)
+	hitPointsIdx := 0
+	for i := 1; i < len(hitPointsString)+1; i++ {
+		screen.SetContent(i, 2, rune(hitPointsString[hitPointsIdx]), nil, tcell.StyleDefault)
+		hitPointsIdx++
+	}
+
 	game.PrintToMenu(screen)
 }
 
@@ -144,17 +164,6 @@ func (game *Game) DrawMenuBorder(screen tcell.Screen) {
 	screen.SetContent(game.menu.width, 0, tcell.RuneURCorner, nil, tcell.StyleDefault)
 	screen.SetContent(0, game.menu.height, tcell.RuneLLCorner, nil, tcell.StyleDefault)
 	screen.SetContent(game.menu.width, game.menu.height, tcell.RuneLRCorner, nil, tcell.StyleDefault)
-}
-
-func (game *Game) ClearActor(screen tcell.Screen, actorType int) {
-	var actor Actor
-	switch actorType {
-	case ActorPlayer:
-		actor = game.player
-	case ActorSquirrel:
-		actor = game.squirrel
-	}
-	screen.SetContent(actor.position.x, actor.position.y, ' ', nil, tcell.StyleDefault)
 }
 
 func (game *Game) PrintToMenu(screen tcell.Screen) {
