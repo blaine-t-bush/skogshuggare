@@ -98,3 +98,13 @@ type TitleMenuPage struct {
 	cursorState    int
 	titleMenuItems map[int]TitleMenuItem
 }
+
+type AnimationMarkovNode struct {
+	state       int
+	connections []AnimationMarkovConnection
+}
+
+type AnimationMarkovConnection struct {
+	stage       int
+	probability float64
+}

@@ -85,11 +85,9 @@ func (game *Game) DrawViewport() {
 					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
 				case *AnimatedObject:
 					// Draw object
-					contentKey := animationStates[content.key][content.animationStage]
-					game.DrawContent(contentKey, contentViewportCoord, actorViewportCoords)
+					game.DrawContent(GetAnimationState(content.key, content.animationStage), contentViewportCoord, actorViewportCoords)
 				case *Fire:
-					contentKey := animationStates[KeyFire][content.animationStage]
-					game.DrawContent(contentKey, contentViewportCoord, actorViewportCoords)
+					game.DrawContent(GetAnimationState(KeyFire, content.animationStage), contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {

@@ -227,6 +227,7 @@ func (game *Game) StateUpdate(mutex *sync.Mutex) {
 	// Give the squirrel a destination if it doesn't alreasdy have one,
 	// or update its destination if it's blocked.
 	// FIXME determine why squirrels sometimes stop even when there seem to be nearby available plantable coordinates
+	// FIXME move to function
 	for key, squirrel := range game.squirrels {
 		if (Coordinate{0, 0} == squirrel.destination) || game.IsPathBlocked(squirrel.destination) {
 			squirrel.destination = game.GetRandomPlantableCoordinate()

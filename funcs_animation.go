@@ -15,19 +15,41 @@ func IsAnimatedObject(content interface{}) bool {
 	return isAnimatedObject
 }
 
-func GetRandomAnimationStage(animationStatesKey int) int {
-	return rand.Intn(len(animationStates[animationStatesKey]))
+func GetAnimationState(key int, stage int) int {
+	return animationMarkov[key][stage].state
 }
 
-func GetNextAnimationStage(animationStatesKey int, currentStage int) int {
-	contentAnimationStates := animationStates[animationStatesKey]
-	var nextStage int
-	if currentStage == len(contentAnimationStates)-1 {
-		nextStage = 0
-	} else {
-		nextStage = currentStage + 1
+func GetRandomAnimationStage(key int) int {
+	return rand.Intn(len(animationMarkov[key]))
+}
+
+func GetNextAnimationStage(key int, stage int) int {
+	// Get Markov connections for current stage
+	connections := animationMarkov[key][stage].connections
+	// Get total probability for normalization, in case it doesn't sum to 1
+	totalProbability := 0.0
+	for _, connection := range connections {
+		totalProbability = totalProbability + connection.probability
 	}
-	return nextStage
+	// Create normalized probability ranges
+	cumulativeProbability := 0.0
+	probabilityRanges := make(map[int]float64)
+	for _, connection := range connections {
+		probabilityRanges[connection.stage] = (connection.probability + cumulativeProbability) / totalProbability
+		cumulativeProbability = cumulativeProbability + connection.probability
+	}
+
+	// Choose state
+	roll := rand.Float64()
+	var newStage int
+	for stage, probabilityRange := range probabilityRanges {
+		if roll <= probabilityRange {
+			newStage = stage
+			break
+		}
+	}
+
+	return newStage
 }
 
 func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {

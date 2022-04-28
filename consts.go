@@ -97,24 +97,48 @@ var (
 		TreeStateStump:     TreeStateRemoved,
 	}
 
-	animationStates = map[int]map[int]int{
-		KeyWater: { // animationStage: animationState
-			0: AnimationStateWater1,
-			1: AnimationStateWater1,
-			2: AnimationStateWater1,
-			3: AnimationStateWater1,
-			4: AnimationStateWater2,
+	animationMarkov = map[int]map[int]AnimationMarkovNode{
+		KeyWater: {
+			0: {AnimationStateWater1, []AnimationMarkovConnection{
+				{0, 0.90},
+				{1, 0.10},
+			}},
+			1: {AnimationStateWater2, []AnimationMarkovConnection{
+				{0, 0.25},
+				{1, 0.75},
+			}},
 		},
-		KeyFire: { // animationStage: animationState
-			0: AnimationStateFire1,
-			1: AnimationStateFire2,
-			2: AnimationStateFire3,
-			3: AnimationStateFire4,
+		KeyFire: {
+			0: {AnimationStateFire1, []AnimationMarkovConnection{
+				{0, 0.10},
+				{1, 0.70},
+				{2, 0.10},
+				{3, 0.10},
+			}},
+			1: {AnimationStateFire2, []AnimationMarkovConnection{
+				{0, 0.10},
+				{1, 0.10},
+				{2, 0.70},
+				{3, 0.10},
+			}},
+			2: {AnimationStateFire3, []AnimationMarkovConnection{
+				{0, 0.10},
+				{1, 0.10},
+				{2, 0.10},
+				{3, 0.70},
+			}},
+			3: {AnimationStateFire4, []AnimationMarkovConnection{
+				{0, 0.70},
+				{1, 0.10},
+				{2, 0.10},
+				{3, 0.10},
+			}},
 		},
 	}
 
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
 		// Static symbols
+		// TODO use background color of occupied cell for player's and squirrels' background colors
 		KeyPlayer:        {char: '@', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
 		KeySquirrel:      {char: 'ơ', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
 		KeyWall:          {char: '#', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
