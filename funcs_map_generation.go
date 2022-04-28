@@ -25,8 +25,8 @@ func IsEdge(coord Coordinate, width int, height int) bool {
 	return (coord.x == 0 || coord.x == width) || (coord.y == 0 || coord.y == height)
 }
 
+// Insert value at index in slice
 func insert(a []byte, c byte, i int) []byte {
-	//a = append(a, 0)
 	return append(a[:i], append([]byte{c}, a[i:]...)...)
 }
 
@@ -40,26 +40,13 @@ func GenerateBorders(width int, height int, mapData *[]byte) {
 				(*mapData)[To1DIndex(Coordinate{x, y}, width)] = ' '
 			}
 		}
-		//(*mapData)[To1DIndex(Coordinate{width, y}, width)] = '\n'
 	}
-	// Insert new lines
-	// \n every (width + 1, 0..height)
-	// Insert at index and shift the rest of slice to the right
+
+	// Inser the newlines at the correct positions based on the width
+	// width * (y + 1) + y
 	for y := 0; y < height; y++ {
 		*mapData = insert(*mapData, '\n', (width*(y+1) + y))
 	}
-
-	/*for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			if IsEdge(Coordinate{x, y}, width-1, height-1) {
-				(*mapData)[To1DIndex(Coordinate{x, y}, width)] = '#'
-			} else {
-				(*mapData)[To1DIndex(Coordinate{x, y}, width)] = ' '
-			}
-		}
-		(*mapData)[To1DIndex(Coordinate{x, height}, width)] = '\n'
-
-	}*/
 }
 
 func To2DIndex(point, width, height int) Coordinate {
@@ -128,7 +115,7 @@ func GenerateMap(width int, height int, maptype string) {
 
 	// Place the player and squirrels on the map after generating the terrain
 	PlacePlayer(width, height, &mapData)
-	PlaceSquirrel(width, height, &mapData)
+	//PlaceSquirrel(width, height, &mapData)
 
 	/*for _, b := range mapData {
 		fmt.Print(string(b))
