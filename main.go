@@ -15,7 +15,6 @@ import (
 )
 
 func main() {
-	GenerateMap(50, 50, "")
 	// Attempt to get vision radius from command line args.
 	visionRadius := 100
 	if len(os.Args) >= 2 { // Make sure there are arguments before accessing slices
@@ -53,6 +52,10 @@ func main() {
 
 	// Read map to initialize game state.
 	mapName := titleMenu.selectedMap
+	if mapName == "generatemap" {
+		GenerateMap(50, 50, "")
+		mapName = "artificiell_skog.karta"
+	}
 	worldContent, playerPosition, squirrelPositions := ReadMap("kartor/" + mapName)
 	squirrels := make(map[int]*Actor)
 	for index, position := range squirrelPositions {

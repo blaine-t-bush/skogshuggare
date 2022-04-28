@@ -78,6 +78,7 @@ const (
 	// Title menu states
 	MainMenuPageOrder
 	NewGamePageOrder
+	GenerateMapPageOrder
 	// DifficultyPageOrder
 )
 

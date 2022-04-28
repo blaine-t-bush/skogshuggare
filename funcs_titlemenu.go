@@ -40,6 +40,11 @@ func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
 		for i, c := range pageItem.text {
 			screen.SetContent(i+centerX, currentY, c, nil, tcell.StyleDefault)
 		}
+		if strings.Contains(pageItem.text, "Height") || strings.Contains(pageItem.text, "Width") { // Also draw the values for height and width if they exist
+			for i, c := range pageItem.value.(string) {
+				screen.SetContent(i+len(pageItem.text)+centerX, currentY, c, nil, tcell.StyleDefault)
+			}
+		}
 		currentY++
 	}
 }
@@ -123,6 +128,8 @@ func (titleMenu *TitleMenu) HandleEnterEvent() {
 		titleMenu.pageState = NewGamePageOrder
 	case "Go back":
 		titleMenu.pageState = MainMenuPageOrder
+	case "Generate new map":
+		titleMenu.pageState = GenerateMapPageOrder
 	default:
 		if pageItems[pageCursorState].value != nil {
 			titleMenu.selectedMap = pageItems[pageCursorState].value.(string)
@@ -158,8 +165,36 @@ func GenerateTitleMenu() TitleMenu {
 		GenerateNewGameMapList(),
 	}
 
-	tm := TitleMenu{0, MainMenuPageOrder, map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage}, "", false}
+	generateMapPage := TitleMenuPage{
+		GenerateMapPageOrder,
+		titleHeaderAnimation,
+		0,
+		0,
+		GenerateMapPageItems(),
+	}
+
+	tm := TitleMenu{0, MainMenuPageOrder, map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage, GenerateMapPageOrder: &generateMapPage}, "", false}
 	return tm
+}
+
+func GenerateMapPageItems() map[int]TitleMenuItem {
+	return map[int]TitleMenuItem{
+		0: {
+			0,
+			"Width: ",
+			"20",
+		},
+		1: {
+			1,
+			"Height: ",
+			"20",
+		},
+		2: {
+			2,
+			"Start",
+			nil,
+		},
+	}
 }
 
 func GenerateNewGameMapList() map[int]TitleMenuItem {
@@ -182,7 +217,15 @@ func GenerateNewGameMapList() map[int]TitleMenuItem {
 		maxI++
 	}
 
-	titleMenuItems[maxI] = TitleMenuItem{
+	titleMenuItems[maxI] = TitleMenuItem{ // Generate new map menu item
+		maxI,
+		"Generate new map",
+		nil,
+	}
+
+	maxI++
+
+	titleMenuItems[maxI] = TitleMenuItem{ // Go back menu item
 		maxI,
 		"Go back",
 		nil,
