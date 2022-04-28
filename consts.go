@@ -4,8 +4,10 @@ import "github.com/gdamore/tcell"
 
 const (
 	// Game parameters
-	TickRate      = 30 // Milliseconds between ticks
-	MaxIterations = 1000
+	TickRate                  = 30 // Milliseconds between ticks
+	MaxIterations             = 1000
+	DefaultGeneratedMapWidth  = 20
+	DefaultGeneratedMapHeight = 20
 	// Map characters
 	MapPlayer     = 'p'
 	MapSquirrel   = 's'
