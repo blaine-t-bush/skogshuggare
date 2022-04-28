@@ -80,11 +80,16 @@ func (game *Game) DrawViewport() {
 
 			if content, found := game.world.content[Coordinate{x, y}]; found {
 				switch content := content.(type) {
-				case *Object:
+				case *StaticObject:
 					// Draw object
 					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
+				case *AnimatedObject:
+					// Draw object
+					contentKey := animationStates[content.key][content.animationStage]
+					game.DrawContent(contentKey, contentViewportCoord, actorViewportCoords)
 				case *Fire:
-					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
+					contentKey := animationStates[KeyFire][content.animationStage]
+					game.DrawContent(contentKey, contentViewportCoord, actorViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {

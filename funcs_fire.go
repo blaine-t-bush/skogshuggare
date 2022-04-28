@@ -4,13 +4,28 @@ import (
 	"math/rand"
 )
 
+func IsFire(content interface{}) bool {
+	isFire := false
+	switch content := content.(type) {
+	case *AnimatedObject:
+		if content.key == KeyFire {
+			isFire = true
+		}
+	}
+	return isFire
+}
+
 func BurnoutChance(t int) float64 {
 	return 1 - (1 / (1 + float64(t)/float64(FireBurnoutHalflife)))
 }
 
-func (game *Game) SpawnRandomFire() {
-	coord := game.GetRandomFlammableCoordinate()
-	game.world.content[coord] = &Fire{KeyFireLight, coord, 0}
+func (game *Game) CreateFire(coordinate Coordinate) bool {
+	game.world.content[coordinate] = &Fire{GetRandomAnimationStage(KeyFire), coordinate, 0}
+	return true
+}
+
+func (game *Game) SpawnRandomFire() bool {
+	return game.CreateFire(game.GetRandomFlammableCoordinate())
 }
 
 func (game *Game) UpdateFire() int {
@@ -23,7 +38,7 @@ func (game *Game) UpdateFire() int {
 			// Check for burnout
 			if rand.Float64() <= BurnoutChance(content.age) {
 				delete(game.world.content, position)
-				game.world.content[position] = &Object{KeyBurnt, false, false, true}
+				game.world.content[position] = &StaticObject{KeyBurnt, false, false, true}
 			}
 
 			// Check for spreading
@@ -47,7 +62,7 @@ func (game *Game) UpdateFire() int {
 				spreadCoordinate := Translate(position, deltaX, deltaY)
 				if existingContent, exists := game.world.content[spreadCoordinate]; exists {
 					switch existingContent := existingContent.(type) {
-					case *Object:
+					case *StaticObject:
 						if !existingContent.flammable {
 							spread = false
 						}
@@ -56,8 +71,9 @@ func (game *Game) UpdateFire() int {
 
 				// Spread if not blocked
 				if spread {
-					game.world.content[spreadCoordinate] = &Fire{KeyFireLight, spreadCoordinate, 0}
-					spreadAndSpawnCount++
+					if game.CreateFire(spreadCoordinate) {
+						spreadAndSpawnCount++
+					}
 				}
 			}
 
@@ -68,7 +84,9 @@ func (game *Game) UpdateFire() int {
 
 	// Check for spawning of new fires
 	if rand.Float64() <= FireSpawnChance {
-		game.SpawnRandomFire()
+		if game.SpawnRandomFire() {
+			spreadAndSpawnCount++
+		}
 	}
 
 	return spreadAndSpawnCount
@@ -137,7 +155,7 @@ func (game *Game) Dig(dir int) int {
 		dig := true
 		if content, exists := game.world.content[targetCoordinate]; exists {
 			switch content := content.(type) {
-			case *Object:
+			case *StaticObject:
 				if content.collidable {
 					dig = false
 				}
@@ -147,7 +165,7 @@ func (game *Game) Dig(dir int) int {
 		}
 
 		if dig {
-			game.world.content[targetCoordinate] = &Object{KeyFirebreak, false, false, false}
+			game.world.content[targetCoordinate] = &StaticObject{KeyFirebreak, false, false, false}
 			dugCount++
 		}
 	}

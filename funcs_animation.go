@@ -6,6 +6,30 @@ import (
 	"time"
 )
 
+func IsAnimatedObject(content interface{}) bool {
+	isAnimatedObject := false
+	switch content.(type) {
+	case *AnimatedObject:
+		isAnimatedObject = true
+	}
+	return isAnimatedObject
+}
+
+func GetRandomAnimationStage(animationStatesKey int) int {
+	return rand.Intn(len(animationStates[animationStatesKey]))
+}
+
+func GetNextAnimationStage(animationStatesKey int, currentStage int) int {
+	contentAnimationStates := animationStates[animationStatesKey]
+	var nextStage int
+	if currentStage == len(contentAnimationStates)-1 {
+		nextStage = 0
+	} else {
+		nextStage = currentStage + 1
+	}
+	return nextStage
+}
+
 func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 	defer wg.Done()
 
@@ -28,16 +52,12 @@ func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 
 func (game *Game) AnimationUpdate() {
 	// Randomly change fire and water glyphs according to available keys.
-	fireKeys := [2]int{KeyFireLight, KeyFireHeavy}
-	waterKeys := [2]int{KeyWaterLight, KeyWaterHeavy}
 	for _, content := range game.world.content {
 		switch content := content.(type) {
-		case *Object:
-			if content.key == KeyWaterLight || content.key == KeyWaterHeavy {
-				content.key = waterKeys[rand.Intn(len(waterKeys))]
-			}
+		case *AnimatedObject:
+			content.animationStage = GetNextAnimationStage(content.key, content.animationStage)
 		case *Fire:
-			content.key = fireKeys[rand.Intn(len(fireKeys))]
+			content.animationStage = GetNextAnimationStage(KeyFire, content.animationStage)
 		}
 	}
 }

@@ -20,7 +20,11 @@ const (
 func (game *Game) IsBlocked(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
 		switch content := content.(type) {
-		case *Object:
+		case *StaticObject:
+			if content.collidable {
+				return true
+			}
+		case *AnimatedObject:
 			if content.collidable {
 				return true
 			}
@@ -36,7 +40,11 @@ func (game *Game) IsBlocked(coordinate Coordinate) bool {
 func (game *Game) IsPathBlocked(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
 		switch content := content.(type) {
-		case *Object:
+		case *StaticObject:
+			if content.collidable {
+				return true
+			}
+		case *AnimatedObject:
 			if content.collidable {
 				return true
 			}
@@ -54,7 +62,11 @@ func (game *Game) IsPathBlocked(coordinate Coordinate) bool {
 func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
 		switch content := content.(type) {
-		case *Object:
+		case *StaticObject:
+			if content.collidable || !content.plantable {
+				return true
+			}
+		case *AnimatedObject:
 			if content.collidable || !content.plantable {
 				return true
 			}
@@ -70,7 +82,11 @@ func (game *Game) IsUnplantable(coordinate Coordinate) bool {
 func (game *Game) IsUnflammable(coordinate Coordinate) bool {
 	if content, exists := game.world.content[coordinate]; exists {
 		switch content := content.(type) {
-		case *Object:
+		case *StaticObject:
+			if !content.flammable {
+				return true
+			}
+		case *AnimatedObject:
 			if !content.flammable {
 				return true
 			}

@@ -17,22 +17,30 @@ type Actor struct {
 	hitPointsMax     int
 }
 
+type StaticObject struct {
+	key        int
+	collidable bool // Are actors blocked
+	flammable  bool // Can fire spread here
+	plantable  bool // Can seeds be planted here
+}
+
 type Tree struct {
 	position Coordinate
 	state    int // See constants
 }
 
-type Fire struct {
-	key      int // Represents which glyph to draw with
-	position Coordinate
-	age      int // Number of game update ticks since fire was created
+type AnimatedObject struct {
+	key            int
+	animationStage int
+	collidable     bool // Are actors blocked
+	flammable      bool // Can fire spread here
+	plantable      bool // Can seeds be planted here
 }
 
-type Object struct {
-	key        int
-	collidable bool // Are actors blocked
-	flammable  bool // Can fire spread here
-	plantable  bool // Can seeds be planted here
+type Fire struct {
+	animationStage int // Represents which glyph to draw with
+	position       Coordinate
+	age            int // Number of game update ticks since fire was created
 }
 
 type World struct {
