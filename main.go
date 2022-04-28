@@ -53,7 +53,7 @@ func main() {
 	// Read map to initialize game state.
 	mapName := titleMenu.selectedMap
 	if mapName == "generatemap" {
-		GenerateMap(50, 50, "")
+		GenerateMap(titleMenu.generatedMapWidth, titleMenu.generatedMapWidth, "")
 		mapName = "artificiell_skog.karta"
 	}
 	worldContent, playerPosition, squirrelPositions := ReadMap("kartor/" + mapName)
@@ -83,18 +83,17 @@ func main() {
 
 func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleMenu) { // TODO make sure variables are not changed at the same time w/ mutex or channels
 	defer wg.Done()
-
+	var m sync.Mutex
 	// Initialize game menu update ticker.
 	ticker := time.NewTicker(TickRate * time.Millisecond)
 
 	// Start the input handler
-	go titleMenu.InputHandler(screen)
+	go titleMenu.InputHandler(screen, &m)
 	// Start title menu animation handler
 	go titleMenu.AnimationHandler()
 
 	for range ticker.C {
-		titleMenu.Update(screen)
-		titleMenu.Draw(screen)
+		titleMenu.Draw(screen, &m)
 		if titleMenu.exit {
 			screen.Clear()
 			return

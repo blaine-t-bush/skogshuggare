@@ -2,16 +2,20 @@ package main
 
 import (
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gdamore/tcell"
 )
 
-func (titleMenu *TitleMenu) Draw(screen tcell.Screen) {
+func (titleMenu *TitleMenu) Draw(screen tcell.Screen, m *sync.Mutex) {
+	m.Lock()
 	screen.Clear()
 	titleMenu.DrawPage(screen, titleMenu.pageState)
 	screen.Show()
+	m.Unlock()
 }
 
 func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
@@ -32,7 +36,7 @@ func (titleMenu *TitleMenu) DrawPage(screen tcell.Screen, pageState int) {
 	}
 
 	for i := 0; i < len(pageItems); i++ { // This ensures order
-		pageItem := pageItems[i]
+		pageItem := (pageItems)[i]
 		centerX := (widthScreen / 2) - (len(pageItem.text))
 		if i == currentPage.cursorState {
 			screen.SetContent(centerX-1, currentY, '>', nil, tcell.StyleDefault)
@@ -68,16 +72,13 @@ func (titleMenu *TitleMenu) AnimationHandler() {
 	}
 }
 
-func (titleMenu *TitleMenu) Update(screen tcell.Screen) {
-
-}
-
-func (titleMenu *TitleMenu) InputHandler(screen tcell.Screen) {
+func (titleMenu *TitleMenu) InputHandler(screen tcell.Screen, m *sync.Mutex) {
 	for {
 		if titleMenu.exit {
 			return
 		}
 		ev := screen.PollEvent()
+		m.Lock()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			switch ev.Key() {
@@ -90,10 +91,17 @@ func (titleMenu *TitleMenu) InputHandler(screen tcell.Screen) {
 				titleMenu.MoveMenuCursor(DirDown)
 			case tcell.KeyEnter:
 				titleMenu.HandleEnterEvent()
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
+				titleMenu.HandleBackspaceEvent()
+			}
+			switch ev.Rune() {
+			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+				titleMenu.HandleNumberInputEvent(ev.Rune())
 			}
 		case *tcell.EventResize:
 			screen.Sync()
 		}
+		m.Unlock()
 	}
 }
 
@@ -130,10 +138,40 @@ func (titleMenu *TitleMenu) HandleEnterEvent() {
 		titleMenu.pageState = MainMenuPageOrder
 	case "Generate new map":
 		titleMenu.pageState = GenerateMapPageOrder
+	case "Start":
+		// Convert the width and height values to integers
+		titleMenu.generatedMapWidth, _ = strconv.Atoi(titleMenu.titleMenuPages[GenerateMapPageOrder].titleMenuItems[0].value.(string))
+		titleMenu.generatedMapHeight, _ = strconv.Atoi(titleMenu.titleMenuPages[GenerateMapPageOrder].titleMenuItems[1].value.(string))
+		titleMenu.selectedMap = "generatemap"
+		titleMenu.exit = true
 	default:
-		if pageItems[pageCursorState].value != nil {
+		if pageItems[pageCursorState].value != nil && titleMenu.pageState == NewGamePageOrder {
 			titleMenu.selectedMap = pageItems[pageCursorState].value.(string)
 			titleMenu.exit = true
+		}
+	}
+}
+
+func (titleMenu *TitleMenu) HandleBackspaceEvent() {
+	pageCursorState := titleMenu.titleMenuPages[titleMenu.pageState].cursorState
+	pageItems := titleMenu.titleMenuPages[titleMenu.pageState].titleMenuItems
+	currentPageItem := pageItems[pageCursorState]
+
+	if strings.Contains(currentPageItem.text, "Height") || strings.Contains(currentPageItem.text, "Width") { // Also draw the values for height and width if they exist
+		if len(currentPageItem.value.(string)) > 0 {
+			currentPageItem.value = currentPageItem.value.(string)[:len(currentPageItem.value.(string))-1]
+		}
+	}
+}
+
+func (titleMenu *TitleMenu) HandleNumberInputEvent(r rune) {
+	pageCursorState := titleMenu.titleMenuPages[titleMenu.pageState].cursorState
+	pageItems := titleMenu.titleMenuPages[titleMenu.pageState].titleMenuItems
+	currentPageItem := pageItems[pageCursorState]
+
+	if strings.Contains(currentPageItem.text, "Height") || strings.Contains(currentPageItem.text, "Width") { // Also draw the values for height and width if they exist
+		if len(currentPageItem.value.(string)) < 3 {
+			currentPageItem.value = currentPageItem.value.(string) + string(r)
 		}
 	}
 }
@@ -145,15 +183,16 @@ func GenerateTitleMenu() TitleMenu {
 
 	titleHeaderAnimation := []string{TitleMenuHeaderAnim1, TitleMenuHeaderAnim2, TitleMenuHeaderAnim3, TitleMenuHeaderAnim4, TitleMenuHeaderAnim5, TitleMenuHeaderAnim6,
 		TitleMenuHeaderAnim7, TitleMenuHeaderAnim8, TitleMenuHeaderAnim9, TitleMenuHeaderAnim10, TitleMenuHeaderAnim11, TitleMenuHeaderAnim12, TitleMenuHeaderAnim13}
+
 	mainMenu := TitleMenuPage{
 		MainMenuPageOrder,
 		titleHeaderAnimation,
 		0,
 		0,
-		map[int]TitleMenuItem{
-			0: newGamePageItem,
-			1: loadGamePageItem,
-			2: exitGameItem,
+		map[int]*TitleMenuItem{
+			0: &newGamePageItem,
+			1: &loadGamePageItem,
+			2: &exitGameItem,
 		},
 	}
 
@@ -173,12 +212,18 @@ func GenerateTitleMenu() TitleMenu {
 		GenerateMapPageItems(),
 	}
 
-	tm := TitleMenu{0, MainMenuPageOrder, map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage, GenerateMapPageOrder: &generateMapPage}, "", false}
+	tm := TitleMenu{0,
+		MainMenuPageOrder,
+		map[int]*TitleMenuPage{MainMenuPageOrder: &mainMenu, NewGamePageOrder: &newGamePage, GenerateMapPageOrder: &generateMapPage},
+		"",
+		DefaultGeneratedMapWidth,
+		DefaultGeneratedMapHeight,
+		false}
 	return tm
 }
 
-func GenerateMapPageItems() map[int]TitleMenuItem {
-	return map[int]TitleMenuItem{
+func GenerateMapPageItems() map[int]*TitleMenuItem {
+	return map[int]*TitleMenuItem{
 		0: {
 			0,
 			"Width: ",
@@ -197,9 +242,9 @@ func GenerateMapPageItems() map[int]TitleMenuItem {
 	}
 }
 
-func GenerateNewGameMapList() map[int]TitleMenuItem {
+func GenerateNewGameMapList() map[int]*TitleMenuItem {
 
-	titleMenuItems := make(map[int]TitleMenuItem)
+	titleMenuItems := make(map[int]*TitleMenuItem)
 	files, err := os.ReadDir("kartor/")
 
 	if err != nil {
@@ -209,7 +254,7 @@ func GenerateNewGameMapList() map[int]TitleMenuItem {
 	maxI := 0
 
 	for i, file := range files {
-		titleMenuItems[i] = TitleMenuItem{
+		titleMenuItems[i] = &TitleMenuItem{
 			i,
 			file.Name(),
 			file.Name(),
@@ -217,7 +262,7 @@ func GenerateNewGameMapList() map[int]TitleMenuItem {
 		maxI++
 	}
 
-	titleMenuItems[maxI] = TitleMenuItem{ // Generate new map menu item
+	titleMenuItems[maxI] = &TitleMenuItem{ // Generate new map menu item
 		maxI,
 		"Generate new map",
 		nil,
@@ -225,7 +270,7 @@ func GenerateNewGameMapList() map[int]TitleMenuItem {
 
 	maxI++
 
-	titleMenuItems[maxI] = TitleMenuItem{ // Go back menu item
+	titleMenuItems[maxI] = &TitleMenuItem{ // Go back menu item
 		maxI,
 		"Go back",
 		nil,

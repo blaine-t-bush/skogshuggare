@@ -69,11 +69,13 @@ type GrowthInfo struct {
 }
 
 type TitleMenu struct {
-	cursorState    int
-	pageState      int
-	titleMenuPages map[int]*TitleMenuPage
-	selectedMap    string
-	exit           bool
+	cursorState        int
+	pageState          int
+	titleMenuPages     map[int]*TitleMenuPage
+	selectedMap        string
+	generatedMapWidth  int
+	generatedMapHeight int
+	exit               bool
 }
 
 type TitleMenuItem struct {
@@ -87,5 +89,5 @@ type TitleMenuPage struct {
 	content        []string
 	animationState int
 	cursorState    int
-	titleMenuItems map[int]TitleMenuItem
+	titleMenuItems map[int]*TitleMenuItem
 }
