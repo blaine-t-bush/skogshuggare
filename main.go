@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	GenerateMap(50, 50, "")
 	// Attempt to get vision radius from command line args.
 	visionRadius := 100
 	if len(os.Args) >= 2 { // Make sure there are arguments before accessing slices
@@ -100,7 +101,7 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 
 func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
-	worldContent := make(map[Coordinate]interface{})
+	worldContent := make(map[Coordinate]any)
 
 	if err != nil {
 		fmt.Println(err)
