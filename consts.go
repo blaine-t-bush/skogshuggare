@@ -97,6 +97,11 @@ var (
 		TreeStateStump:     TreeStateRemoved,
 	}
 
+	animationRates = map[int]int{
+		KeyWater: 4,
+		KeyFire:  1,
+	}
+
 	animationMarkov = map[int]map[int]AnimationMarkovNode{
 		KeyWater: {
 			0: {AnimationStateWater1, []AnimationMarkovConnection{
@@ -104,8 +109,8 @@ var (
 				{1, 0.10},
 			}},
 			1: {AnimationStateWater2, []AnimationMarkovConnection{
-				{0, 0.25},
-				{1, 0.75},
+				{0, 0.50},
+				{1, 0.50},
 			}},
 		},
 		KeyFire: {

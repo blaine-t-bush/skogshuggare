@@ -59,9 +59,11 @@ func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 	ticker := time.NewTicker(AnimationTickDuration * time.Millisecond)
 
 	// Update animation state and re-draw on every tick.
+	counter := 0
 	for range ticker.C {
+		counter++
 		mutex.Lock()
-		game.AnimationUpdate()
+		game.AnimationUpdate(counter)
 		game.Draw()
 		mutex.Unlock()
 		if game.exit {
@@ -72,14 +74,18 @@ func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 
 }
 
-func (game *Game) AnimationUpdate() {
+func (game *Game) AnimationUpdate(counter int) {
 	// Randomly change fire and water glyphs according to available keys.
 	for _, content := range game.world.content {
 		switch content := content.(type) {
 		case *AnimatedObject:
-			content.animationStage = GetNextAnimationStage(content.key, content.animationStage)
+			if counter%animationRates[content.key] == 0 {
+				content.animationStage = GetNextAnimationStage(content.key, content.animationStage)
+			}
 		case *Fire:
-			content.animationStage = GetNextAnimationStage(KeyFire, content.animationStage)
+			if counter%animationRates[KeyFire] == 0 {
+				content.animationStage = GetNextAnimationStage(KeyFire, content.animationStage)
+			}
 		}
 	}
 }
