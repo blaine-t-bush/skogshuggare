@@ -39,19 +39,17 @@ func (game *Game) DrawViewport() {
 	// Draw player.
 	w, h := game.screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
-	game.DrawContent(KeyPlayer, playerViewportCoord, []Coordinate{})
 
-	// Draw squirrels.
+	// Get squirrel-blocked tiles.
 	var squirrelViewportCoord Coordinate
 	var squirrelViewportCoords []Coordinate
 	for _, squirrel := range game.squirrels {
 		squirrelViewportCoord = Translate(playerViewportCoord, squirrel.position.x-game.player.position.x, squirrel.position.y-game.player.position.y)
-		game.DrawContent(KeySquirrel, squirrelViewportCoord, []Coordinate{playerViewportCoord}) // FIXME only draw inside viewport
 		squirrelViewportCoords = append(squirrelViewportCoords, squirrelViewportCoord)
 	}
 
 	// Draw content.
-	actorViewportCoords := append(squirrelViewportCoords, playerViewportCoord)
+	aboveViewportCoords := []Coordinate{}
 	xRadiusMin, xRadiusMax, yRadiusMin, yRadiusMax := game.GetDrawRanges()
 	for x := xRadiusMin; x <= xRadiusMax; x++ {
 		for y := yRadiusMin; y <= yRadiusMax; y++ {
@@ -82,50 +80,94 @@ func (game *Game) DrawViewport() {
 				switch content := content.(type) {
 				case *StaticObject:
 					// Draw object
-					game.DrawContent(content.key, contentViewportCoord, actorViewportCoords)
+					aboveViewportCoords = game.DrawContent(content.key, contentViewportCoord, aboveViewportCoords)
 				case *AnimatedObject:
 					// Draw object
-					game.DrawContent(GetAnimationState(content.key, content.animationStage), contentViewportCoord, actorViewportCoords)
+					aboveViewportCoords = game.DrawContent(GetAnimationState(content.key, content.animationStage), contentViewportCoord, aboveViewportCoords)
 				case *Fire:
-					game.DrawContent(GetAnimationState(KeyFire, content.animationStage), contentViewportCoord, actorViewportCoords)
+					aboveViewportCoords = game.DrawContent(GetAnimationState(KeyFire, content.animationStage), contentViewportCoord, aboveViewportCoords)
 				case *Tree:
 					// Draw tree
 					switch content.state {
 					case TreeStateStump:
-						game.DrawContent(KeyTreeStump, contentViewportCoord, actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeStump, contentViewportCoord, aboveViewportCoords)
 					case TreeStateTrunk:
-						game.DrawContent(KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeTrunk, contentViewportCoord, aboveViewportCoords)
 					case TreeStateStumpling:
-						game.DrawContent(KeyTreeStumpling, contentViewportCoord, actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeStumpling, contentViewportCoord, aboveViewportCoords)
 					case TreeStateSapling:
-						game.DrawContent(KeyTreeSapling, contentViewportCoord, actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeSapling, contentViewportCoord, aboveViewportCoords)
 					case TreeStateSeed:
-						game.DrawContent(KeyTreeSeed, contentViewportCoord, actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeSeed, contentViewportCoord, aboveViewportCoords)
 					case TreeStateAdult:
-						game.DrawContent(KeyTreeTrunk, contentViewportCoord, actorViewportCoords)
-						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, -1, -1), actorViewportCoords)
-						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 0, -1), actorViewportCoords)
-						game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 1, -1), actorViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeTrunk, contentViewportCoord, aboveViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, -1, -1), aboveViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 0, -1), aboveViewportCoords)
+						aboveViewportCoords = game.DrawContent(KeyTreeLeaves, Translate(contentViewportCoord, 1, -1), aboveViewportCoords)
 					}
 				}
 			}
 		}
 	}
+
+	game.DrawActor(KeyPlayer, playerViewportCoord, aboveViewportCoords)
+	for _, squirrelViewportCoord := range squirrelViewportCoords {
+		game.DrawActor(KeySquirrel, squirrelViewportCoord, aboveViewportCoords) // FIXME only draw inside viewport
+	}
 }
 
-// Draws content for the given key at the given coord, but only if that coord is not in priorityCoords
-func (game *Game) DrawContent(key int, coord Coordinate, priorityCoords []Coordinate) {
+// Draws content for the given key at the given coord, and updates the list of coordinates to render above actors if necessary.
+func (game *Game) DrawContent(key int, coord Coordinate, aboveCoords []Coordinate) []Coordinate {
 	symbol := symbols[key]
-	draw := true
-	for _, priorityCoord := range priorityCoords {
-		if coord == priorityCoord && !symbol.aboveActor {
-			draw = false
+	game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+	if symbol.aboveActor {
+		aboveCoords = append(aboveCoords, coord)
+	}
+
+	return aboveCoords
+}
+
+// Draws actor, but only if they are not on a tile with priority content (i.e. aboveActor is true).
+// Also gives actor the same background as the content they're on, if it exists.
+func (game *Game) DrawActor(key int, coord Coordinate, aboveCoords []Coordinate) bool {
+	symbol := symbols[key]
+	hasAbove := false
+	for _, aboveCoord := range aboveCoords {
+		if aboveCoord == coord {
+			hasAbove = true
+			break
 		}
 	}
 
-	if draw {
-		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+	var bg tcell.Color
+	hasBelow := false
+	w, h := game.screen.Size()
+	playerViewportCoord := Coordinate{w / 2, h / 2}
+	worldCoord := Translate(playerViewportCoord, -coord.x+game.player.position.x, -coord.y+game.player.position.y)
+	if content, exists := game.world.content[worldCoord]; exists {
+		switch content := content.(type) {
+		case *StaticObject:
+			_, bg, _ = symbols[content.key].style.Decompose()
+			hasBelow = true
+		case *AnimatedObject:
+			_, bg, _ = symbols[content.key].style.Decompose()
+			hasBelow = true
+		case *Fire:
+			_, bg, _ = symbols[KeyFire].style.Decompose()
+			hasBelow = true
+		}
 	}
+
+	if !hasAbove {
+		if hasBelow {
+			game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style.Background(bg))
+		} else {
+			game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+		}
+		return true
+	}
+
+	return false
 }
 
 func (game *Game) DrawMenu() {

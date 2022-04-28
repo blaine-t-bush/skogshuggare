@@ -74,6 +74,10 @@ const (
 	NewGamePageOrder
 	// DifficultyPageOrder
 	// Animation states
+	AnimationStateGrassLight1
+	AnimationStateGrassLight2
+	AnimationStateGrassHeavy1
+	AnimationStateGrassHeavy2
 	AnimationStateWater1
 	AnimationStateWater2
 	AnimationStateFire1
@@ -98,11 +102,33 @@ var (
 	}
 
 	animationRates = map[int]int{
-		KeyWater: 4,
-		KeyFire:  1,
+		KeyGrassLight: 2,
+		KeyGrassHeavy: 2,
+		KeyWater:      4,
+		KeyFire:       1,
 	}
 
 	animationMarkov = map[int]map[int]AnimationMarkovNode{
+		KeyGrassLight: {
+			0: {AnimationStateGrassLight1, []AnimationMarkovConnection{
+				{0, 0.90},
+				{1, 0.10},
+			}},
+			1: {AnimationStateGrassLight2, []AnimationMarkovConnection{
+				{0, 0.50},
+				{1, 0.50},
+			}},
+		},
+		KeyGrassHeavy: {
+			0: {AnimationStateGrassHeavy1, []AnimationMarkovConnection{
+				{0, 0.90},
+				{1, 0.10},
+			}},
+			1: {AnimationStateGrassHeavy2, []AnimationMarkovConnection{
+				{0, 0.50},
+				{1, 0.50},
+			}},
+		},
 		KeyWater: {
 			0: {AnimationStateWater1, []AnimationMarkovConnection{
 				{0, 0.90},
@@ -143,7 +169,6 @@ var (
 
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
 		// Static symbols
-		// TODO use background color of occupied cell for player's and squirrels' background colors
 		KeyPlayer:        {char: '@', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorIndianRed)},
 		KeySquirrel:      {char: 'ơ', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorRosyBrown)},
 		KeyWall:          {char: '#', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
@@ -156,15 +181,19 @@ var (
 		KeyGrassLight:    {char: '\'', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		KeyGrassHeavy:    {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		KeyWater:         {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
-		KeyBurnt:         {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorDarkSlateGray).Background(tcell.ColorDarkGray)},
-		KeyFirebreak:     {char: '▓', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorSandyBrown)},
+		KeyBurnt:         {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorDarkGray)},
+		KeyFirebreak:     {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorSandyBrown)},
 		// Animated symbols
-		AnimationStateWater1: {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
-		AnimationStateWater2: {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
-		AnimationStateFire1:  {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrange)},
-		AnimationStateFire2:  {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed).Background(tcell.ColorOrange)},
-		AnimationStateFire3:  {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrange)},
-		AnimationStateFire4:  {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
+		AnimationStateGrassLight1: {char: '\'', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateGrassLight2: {char: '´', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateGrassHeavy1: {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateGrassHeavy2: {char: '”', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateWater1:      {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
+		AnimationStateWater2:      {char: '~', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorMediumBlue).Background(tcell.ColorCornflowerBlue)},
+		AnimationStateFire1:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrange)},
+		AnimationStateFire2:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed).Background(tcell.ColorOrange)},
+		AnimationStateFire3:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrange)},
+		AnimationStateFire4:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
 	}
 )
 
