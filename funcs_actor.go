@@ -39,6 +39,10 @@ func (game *Game) MoveActor(actor *Actor, len int, dir int) bool {
 			if content.collidable {
 				translate = false
 			}
+		case *AnimatedObject:
+			if content.collidable {
+				translate = false
+			}
 		case *Tree:
 			translate = false
 		}

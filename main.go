@@ -107,6 +107,7 @@ func TitleMenuHandler(wg *sync.WaitGroup, screen tcell.Screen, titleMenu *TitleM
 func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 	filebuffer, err := ioutil.ReadFile(fileName)
 	worldContent := make(map[Coordinate]interface{})
+	decorationContent := make(map[Coordinate]interface{})
 
 	if err != nil {
 		fmt.Println(err)
@@ -140,6 +141,8 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 				worldContent[Coordinate{i, height}] = &AnimatedObject{KeyWater, GetRandomAnimationStage(KeyWater), true, false, false}
 			case MapFire:
 				worldContent[Coordinate{i, height}] = &Fire{GetRandomAnimationStage(KeyFire), Coordinate{i, height}, 0}
+			case MapCloud:
+				decorationContent[Coordinate{i, height}] = &DecorationObject{KeyCloud, GetRandomAnimationStage(KeyCloud), DirRight}
 			}
 		}
 
@@ -155,7 +158,7 @@ func ReadMap(fileName string) (World, Coordinate, []Coordinate) {
 		}
 	}
 
-	return World{width, height, _borders, worldContent}, playerPosition, squirrelPositions
+	return World{width, height, _borders, worldContent, decorationContent}, playerPosition, squirrelPositions
 }
 
 func (game *Game) StateTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {

@@ -37,6 +37,12 @@ type AnimatedObject struct {
 	plantable      bool // Can seeds be planted here
 }
 
+type DecorationObject struct {
+	key            int
+	animationStage int
+	direction      int
+}
+
 type Fire struct {
 	animationStage int // Represents which glyph to draw with
 	position       Coordinate
@@ -44,10 +50,11 @@ type Fire struct {
 }
 
 type World struct {
-	width   int
-	height  int
-	borders map[Coordinate]int // Store the borders in a lookup-table instead of running checks every single loop
-	content map[Coordinate]any
+	width       int
+	height      int
+	borders     map[Coordinate]int // Store the borders in a lookup-table instead of running checks every single loop
+	content     map[Coordinate]any
+	decorations map[Coordinate]any
 }
 
 type Game struct {

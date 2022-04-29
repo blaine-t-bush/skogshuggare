@@ -98,6 +98,22 @@ func (game *Game) IsUnflammable(coordinate Coordinate) bool {
 	return false
 }
 
+func (game *Game) GetRandomOutsideEdgeCoordinate() Coordinate {
+	var possibleCoordinates []Coordinate
+
+	for r := -1; r <= game.world.height+1; r++ {
+		possibleCoordinates = append(possibleCoordinates, Coordinate{-1, r})
+		possibleCoordinates = append(possibleCoordinates, Coordinate{game.world.height + 1, r})
+	}
+
+	for c := -1; c <= game.world.width+1; c++ {
+		possibleCoordinates = append(possibleCoordinates, Coordinate{c, -1})
+		possibleCoordinates = append(possibleCoordinates, Coordinate{c, game.world.width + 1})
+	}
+
+	return possibleCoordinates[rand.Intn(len(possibleCoordinates))-1]
+}
+
 func (game *Game) GetRandomAvailableCoordinate() Coordinate {
 	coordinate := Coordinate{rand.Intn(game.world.width), rand.Intn(game.world.height)}
 	iterations := 0

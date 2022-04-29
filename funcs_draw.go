@@ -107,6 +107,13 @@ func (game *Game) DrawViewport() {
 					}
 				}
 			}
+
+			if decoration, found := game.world.decorations[Coordinate{x, y}]; found {
+				switch decoration := decoration.(type) {
+				case *DecorationObject:
+					aboveViewportCoords = game.DrawContent(GetAnimationState(decoration.key, decoration.animationStage), contentViewportCoord, aboveViewportCoords)
+				}
+			}
 		}
 	}
 
@@ -143,7 +150,7 @@ func (game *Game) DrawActor(key int, coord Coordinate, aboveCoords []Coordinate)
 	hasBelow := false
 	w, h := game.screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
-	worldCoord := Translate(playerViewportCoord, -coord.x+game.player.position.x, -coord.y+game.player.position.y)
+	worldCoord := Translate(coord, -playerViewportCoord.x+game.player.position.x, -playerViewportCoord.y+game.player.position.y)
 	if content, exists := game.world.content[worldCoord]; exists {
 		switch content := content.(type) {
 		case *StaticObject:
@@ -285,9 +292,9 @@ func IsBorder(width int, height int, coord Coordinate) (response int, ok bool) {
 
 func (game *Game) GetDrawRanges() (xRadiusMin int, xRadiusMax int, yRadiusMin int, yRadiusMax int) {
 	xRadiusMin = 0
-	xRadiusMax = game.world.width
+	xRadiusMax = game.world.width - 1
 	yRadiusMin = 0
-	yRadiusMax = game.world.height
+	yRadiusMax = game.world.height - 1
 
 	if game.player.position.x-game.player.visionRadius > 0 {
 		xRadiusMin = game.player.position.x - game.player.visionRadius

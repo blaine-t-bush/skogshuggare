@@ -11,9 +11,12 @@ const (
 	MapPlayer   = 'p'
 	MapSquirrel = 's'
 	MapWater    = 'w'
+	MapCloud    = 'c'
 	MapWall     = '#'
 	MapFire     = 'f'
 	// Growth chances (per game tick)
+	BirdSpawnChance     = 0.050
+	CloudSpawnChance    = 0.005
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
 	FireSpawnChance     = 0.005 // Chance per update for fire to randomly spawn on an available tile
@@ -43,6 +46,8 @@ const (
 	KeyFire
 	KeyBurnt
 	KeyFirebreak
+	KeyCloud
+	KeyBird
 	// Directions
 	DirUp
 	DirRight
@@ -84,6 +89,10 @@ const (
 	AnimationStateFire2
 	AnimationStateFire3
 	AnimationStateFire4
+	AnimationStateCloud1
+	AnimationStateCloud2
+	AnimationStateBird1
+	AnimationStateBird2
 )
 
 var (
@@ -106,6 +115,8 @@ var (
 		KeyGrassHeavy: 2,
 		KeyWater:      4,
 		KeyFire:       1,
+		KeyCloud:      4,
+		KeyBird:       1,
 	}
 
 	animationMarkov = map[int]map[int]AnimationMarkovNode{
@@ -165,6 +176,26 @@ var (
 				{3, 0.10},
 			}},
 		},
+		KeyCloud: {
+			0: {AnimationStateCloud1, []AnimationMarkovConnection{
+				{0, 0.70},
+				{1, 0.30},
+			}},
+			1: {AnimationStateCloud2, []AnimationMarkovConnection{
+				{0, 0.30},
+				{1, 0.70},
+			}},
+		},
+		KeyBird: {
+			0: {AnimationStateBird1, []AnimationMarkovConnection{
+				{0, 0.00},
+				{1, 1.00},
+			}},
+			1: {AnimationStateBird2, []AnimationMarkovConnection{
+				{0, 1.00},
+				{1, 0.00},
+			}},
+		},
 	}
 
 	symbols = map[int]Symbol{ // Color options are listed at https://github.com/gdamore/tcell/blob/master/color.go
@@ -184,8 +215,8 @@ var (
 		KeyBurnt:         {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorDarkGray)},
 		KeyFirebreak:     {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorSandyBrown)},
 		// Animated symbols
-		AnimationStateGrassLight1: {char: '\'', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
-		AnimationStateGrassLight2: {char: '´', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateGrassLight1: {char: '´', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
+		AnimationStateGrassLight2: {char: '`', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		AnimationStateGrassHeavy1: {char: '"', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		AnimationStateGrassHeavy2: {char: '”', aboveActor: false, style: tcell.StyleDefault.Foreground(tcell.ColorGreenYellow)},
 		AnimationStateWater1:      {char: ' ', aboveActor: false, style: tcell.StyleDefault.Background(tcell.ColorCornflowerBlue)},
@@ -194,6 +225,10 @@ var (
 		AnimationStateFire2:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed).Background(tcell.ColorOrange)},
 		AnimationStateFire3:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrange)},
 		AnimationStateFire4:       {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorOrange).Background(tcell.ColorOrangeRed)},
+		AnimationStateCloud1:      {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorLightGray).Background(tcell.ColorWhite)},
+		AnimationStateCloud2:      {char: '▓', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorLightGray)},
+		AnimationStateBird1:       {char: '^', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
+		AnimationStateBird2:       {char: 'v', aboveActor: true, style: tcell.StyleDefault.Foreground(tcell.ColorWhite)},
 	}
 )
 

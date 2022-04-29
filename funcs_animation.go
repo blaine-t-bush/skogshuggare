@@ -75,6 +75,11 @@ func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 }
 
 func (game *Game) AnimationUpdate(counter int) {
+	// Check for chance to spawn birds and clouds
+	if rand.Float64() <= BirdSpawnChance {
+		game.world.decorations[game.GetRandomOutsideEdgeCoordinate()] = &DecorationObject{KeyBird, GetRandomAnimationStage(KeyBird), GetRandomDirection()}
+	}
+
 	// Randomly change fire and water glyphs according to available keys.
 	for _, content := range game.world.content {
 		switch content := content.(type) {
@@ -86,6 +91,47 @@ func (game *Game) AnimationUpdate(counter int) {
 			if counter%animationRates[KeyFire] == 0 {
 				content.animationStage = GetNextAnimationStage(KeyFire, content.animationStage)
 			}
+		}
+	}
+
+	// Update decoration animation stages and positions
+	newDecorations := make(map[Coordinate]interface{})
+	var oldCoords, newCoords []Coordinate
+	for coord, decoration := range game.world.decorations {
+		switch decoration := decoration.(type) {
+		case *DecorationObject:
+			if counter%animationRates[decoration.key] == 0 {
+				newCoord := TranslateByDir(coord, decoration.direction, 1)
+				newCoords = append(newCoords, newCoord)
+				oldCoords = append(oldCoords, coord)
+				newDecorations[newCoord] = &DecorationObject{
+					key:            decoration.key,
+					animationStage: GetNextAnimationStage(decoration.key, decoration.animationStage),
+					direction:      decoration.direction,
+				}
+			}
+		}
+	}
+
+	// Update decorations
+	for coord, decoration := range newDecorations {
+		switch decoration := decoration.(type) {
+		case *DecorationObject:
+			game.world.decorations[coord] = decoration
+		}
+	}
+
+	// Determine which elements to delete from decorations map
+	for _, oldCoord := range oldCoords {
+		deleteCoord := true
+		for _, newCoord := range newCoords {
+			if oldCoord == newCoord {
+				deleteCoord = false
+			}
+		}
+
+		if deleteCoord {
+			delete(game.world.decorations, oldCoord)
 		}
 	}
 }
