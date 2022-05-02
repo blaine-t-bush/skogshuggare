@@ -57,20 +57,9 @@ func (game *Game) UpdateFire() int {
 					deltaX = -1
 				}
 
-				// Check if blocked
-				spread := true
-				spreadCoordinate := Translate(position, deltaX, deltaY)
-				if existingContent, exists := game.world.content[spreadCoordinate]; exists {
-					switch existingContent := existingContent.(type) {
-					case *StaticObject:
-						if !existingContent.flammable {
-							spread = false
-						}
-					}
-				}
-
 				// Spread if not blocked
-				if spread {
+				spreadCoordinate := Translate(position, deltaX, deltaY)
+				if game.IsFlammable(spreadCoordinate) {
 					if game.CreateFire(spreadCoordinate) {
 						spreadAndSpawnCount++
 					}

@@ -98,6 +98,10 @@ func (game *Game) IsUnflammable(coordinate Coordinate) bool {
 	return false
 }
 
+func (game *Game) IsFlammable(coordinate Coordinate) bool {
+	return !game.IsUnflammable(coordinate)
+}
+
 func (game *Game) GetRandomOutsideEdgeCoordinate() Coordinate {
 	var possibleCoordinates []Coordinate
 
