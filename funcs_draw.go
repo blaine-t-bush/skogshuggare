@@ -76,7 +76,7 @@ func (game *Game) DrawViewport() {
 				continue
 			}
 
-			if content, found := game.world.content[Coordinate{x, y}]; found {
+			if content, found := game.world.content[coord]; found {
 				switch content := content.(type) {
 				case *StaticObject:
 					// Draw object
@@ -108,10 +108,10 @@ func (game *Game) DrawViewport() {
 				}
 			}
 
-			if decoration, found := game.world.decorations[Coordinate{x, y}]; found {
+			if decoration, found := game.world.decorations[coord]; found {
 				switch decoration := decoration.(type) {
 				case *DecorationObject:
-					aboveViewportCoords = game.DrawContent(GetAnimationState(decoration.key, decoration.animationStage), contentViewportCoord, aboveViewportCoords)
+					aboveViewportCoords = game.DrawDecoration(GetAnimationState(decoration.key, decoration.animationStage), contentViewportCoord, aboveViewportCoords)
 				}
 			}
 		}
@@ -130,6 +130,40 @@ func (game *Game) DrawContent(key int, coord Coordinate, aboveCoords []Coordinat
 	if symbol.aboveActor {
 		aboveCoords = append(aboveCoords, coord)
 	}
+
+	return aboveCoords
+}
+
+// Draws content for the given key at the given coord, and updates the list of coordinates to render above actors if necessary.
+func (game *Game) DrawDecoration(key int, coord Coordinate, aboveCoords []Coordinate) []Coordinate {
+	symbol := symbols[key]
+
+	var bg tcell.Color
+	hasBelow := false
+	w, h := game.screen.Size()
+	playerViewportCoord := Coordinate{w / 2, h / 2}
+	worldCoord := Translate(coord, -playerViewportCoord.x+game.player.position.x, -playerViewportCoord.y+game.player.position.y)
+	if content, exists := game.world.content[worldCoord]; exists {
+		switch content := content.(type) {
+		case *StaticObject:
+			_, bg, _ = symbols[content.key].style.Decompose()
+			hasBelow = true
+		case *AnimatedObject:
+			_, bg, _ = symbols[content.key].style.Decompose()
+			hasBelow = true
+		case *Fire:
+			_, bg, _ = symbols[GetAnimationState(KeyFire, content.animationStage)].style.Decompose()
+			hasBelow = true
+		}
+	}
+
+	if hasBelow {
+		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style.Background(bg))
+	} else {
+		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
+	}
+
+	aboveCoords = append(aboveCoords, coord)
 
 	return aboveCoords
 }
@@ -160,7 +194,7 @@ func (game *Game) DrawActor(key int, coord Coordinate, aboveCoords []Coordinate)
 			_, bg, _ = symbols[content.key].style.Decompose()
 			hasBelow = true
 		case *Fire:
-			_, bg, _ = symbols[KeyFire].style.Decompose()
+			_, bg, _ = symbols[GetAnimationState(KeyFire, content.animationStage)].style.Decompose()
 			hasBelow = true
 		}
 	}

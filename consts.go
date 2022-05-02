@@ -15,13 +15,13 @@ const (
 	MapWall     = '#'
 	MapFire     = 'f'
 	// Growth chances (per game tick)
-	BirdSpawnChance     = 0.050
+	BirdSpawnChance     = 0.950
 	CloudSpawnChance    = 0.005
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
 	FireSpawnChance     = 0.005 // Chance per update for fire to randomly spawn on an available tile
-	FireSpreadChance    = 0.100 // Chance per update for each fire to spread to a random adjacent tile
-	FireBurnoutHalflife = 200   // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
+	FireSpreadChance    = 0.900 // Chance per update for each fire to spread to a random adjacent tile
+	FireBurnoutHalflife = 2000  // The age at which the chance (but not cumulative chance) for fire to burn out becomes 50%
 	// Fire and hitpoints
 	MaxHitPointsPlayer   = 3
 	MaxHitPointsSquirrel = 1

@@ -111,7 +111,7 @@ func (game *Game) GetRandomOutsideEdgeCoordinate() Coordinate {
 		possibleCoordinates = append(possibleCoordinates, Coordinate{c, game.world.width + 1})
 	}
 
-	return possibleCoordinates[rand.Intn(len(possibleCoordinates))-1]
+	return possibleCoordinates[rand.Intn(len(possibleCoordinates)-1)]
 }
 
 func (game *Game) GetRandomAvailableCoordinate() Coordinate {
