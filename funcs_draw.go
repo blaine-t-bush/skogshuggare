@@ -134,7 +134,7 @@ func (game *Game) DrawContent(key int, coord Coordinate, aboveCoords []Coordinat
 	return aboveCoords
 }
 
-// Draws content for the given key at the given coord, and updates the list of coordinates to render above actors if necessary.
+// Draws content for the given key at the given coord, and updates the list of coordinates to render above actors.
 func (game *Game) DrawDecoration(key int, coord Coordinate, aboveCoords []Coordinate) []Coordinate {
 	symbol := symbols[key]
 
@@ -143,6 +143,8 @@ func (game *Game) DrawDecoration(key int, coord Coordinate, aboveCoords []Coordi
 	w, h := game.screen.Size()
 	playerViewportCoord := Coordinate{w / 2, h / 2}
 	worldCoord := Translate(coord, -playerViewportCoord.x+game.player.position.x, -playerViewportCoord.y+game.player.position.y)
+
+	// Check world content map for existing content.
 	if content, exists := game.world.content[worldCoord]; exists {
 		switch content := content.(type) {
 		case *StaticObject:
@@ -157,15 +159,30 @@ func (game *Game) DrawDecoration(key int, coord Coordinate, aboveCoords []Coordi
 		}
 	}
 
+	// Check world trees for existing trees. We have to do this separately because trees can occupy more tiles
+	// than specified by their singular coordinate (i.e. an adult tree has one coordinate but occupies 4 tiles).
+	for coord, content := range game.world.content {
+		switch content := content.(type) {
+		case *Tree:
+			if content.state == TreeStateAdult && worldCoord == coord {
+				_, bg, _ = symbols[KeyTreeTrunk].style.Decompose()
+				hasBelow = true
+				break
+			} else if content.state == TreeStateAdult && (worldCoord == Translate(coord, -1, -1) || worldCoord == Translate(coord, 0, -1) || worldCoord == Translate(coord, 1, -1)) { // FIXME figure out why birds are not drawn on top of top middle and top left leaves
+				_, bg, _ = symbols[KeyTreeLeaves].style.Decompose()
+				hasBelow = true
+				break
+			}
+		}
+	}
+
 	if hasBelow {
 		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style.Background(bg))
 	} else {
 		game.screen.SetContent(coord.x, coord.y, symbol.char, nil, symbol.style)
 	}
 
-	aboveCoords = append(aboveCoords, coord)
-
-	return aboveCoords
+	return append(aboveCoords, coord)
 }
 
 // Draws actor, but only if they are not on a tile with priority content (i.e. aboveActor is true).
