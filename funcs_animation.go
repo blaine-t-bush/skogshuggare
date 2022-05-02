@@ -77,7 +77,7 @@ func (game *Game) AnimationTicker(wg *sync.WaitGroup, mutex *sync.Mutex) {
 func (game *Game) AnimationUpdate(counter int) {
 	// Check for chance to spawn birds and clouds
 	if rand.Float64() <= BirdSpawnChance {
-		game.world.decorations[game.GetRandomOutsideEdgeCoordinate()] = &DecorationObject{KeyBird, GetRandomAnimationStage(KeyBird), GetRandomDirection()}
+		game.world.decorations[game.GetRandomBorderCoordinate()] = &DecorationObject{KeyBird, GetRandomAnimationStage(KeyBird), GetRandomDirection()}
 	}
 
 	// Randomly change fire and water glyphs according to available keys.

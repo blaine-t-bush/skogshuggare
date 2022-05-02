@@ -15,7 +15,7 @@ const (
 	MapWall     = '#'
 	MapFire     = 'f'
 	// Growth chances (per game tick)
-	BirdSpawnChance     = 0.050
+	BirdSpawnChance     = 0.550
 	CloudSpawnChance    = 0.005
 	GrowthChanceSeed    = 0.010 // Seed to sapling
 	GrowthChanceSapling = 0.005 // Sapling to adult
